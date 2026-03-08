@@ -65,6 +65,11 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
   const [isLongPress, setIsLongPress] = useState(false);
   const prevSpeed = useRef(1);
 
+  // Skip seconds state
+  const [skipIntroSec, setSkipIntroSec] = useState(DEFAULT_SKIP_INTRO_SEC);
+  const [skipOutroSec, setSkipOutroSec] = useState(DEFAULT_SKIP_OUTRO_SEC);
+  const [showSkipSettings, setShowSkipSettings] = useState(false);
+
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
