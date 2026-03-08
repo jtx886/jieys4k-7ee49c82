@@ -254,7 +254,20 @@ export default function VideoPlayer({
   };
 
   useEffect(() => {
-    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    const onFs = () => {
+      const isFull = !!document.fullscreenElement;
+      setIsFullscreen(isFull);
+      // Unlock orientation when exiting fullscreen via ESC or other means
+      if (!isFull) {
+        try {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+        } catch (error) {
+          console.log('Screen orientation unlock not supported');
+        }
+      }
+    };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
