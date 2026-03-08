@@ -28,8 +28,8 @@ const RATIO_OPTIONS = [
   { label: "4:3", value: "4/3" },
   { label: "填充", value: "fill" },
 ];
-const SKIP_INTRO_SEC = 0;
-const SKIP_OUTRO_SEC = 0;
+const DEFAULT_SKIP_INTRO_SEC = 0;
+const DEFAULT_SKIP_OUTRO_SEC = 0;
 
 export default function VideoPlayer({ url, onProgress, initialProgress }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -64,6 +64,11 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
   const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
   const [isLongPress, setIsLongPress] = useState(false);
   const prevSpeed = useRef(1);
+
+  // Skip seconds state
+  const [skipIntroSec, setSkipIntroSec] = useState(DEFAULT_SKIP_INTRO_SEC);
+  const [skipOutroSec, setSkipOutroSec] = useState(DEFAULT_SKIP_OUTRO_SEC);
+  const [showSkipSettings, setShowSkipSettings] = useState(false);
 
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
@@ -213,10 +218,10 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
   // ---- Skip intro/outro ----
   const skipIntro = () => {
-    if (videoRef.current) videoRef.current.currentTime = Math.min(SKIP_INTRO_SEC, duration);
+    if (videoRef.current) videoRef.current.currentTime = Math.min(skipIntroSec, duration);
   };
   const skipOutro = () => {
-    if (videoRef.current && duration) videoRef.current.currentTime = Math.max(0, duration - SKIP_OUTRO_SEC);
+    if (videoRef.current && duration) videoRef.current.currentTime = Math.max(0, duration - skipOutroSec);
   };
 
   // ---- Gesture handling (touch) ----
@@ -480,21 +485,57 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {/* Skip intro */}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片头
+                跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
               </button>
               <span className="text-white/80 text-xs tabular-nums">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {/* Skip outro */}
               <button onClick={skipOutro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片尾
+                跳过片尾{skipOutroSec > 0 ? ` ${skipOutroSec}s` : ""}
+              </button>
+              <button
+                onClick={() => setShowSkipSettings(!showSkipSettings)}
+                className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+              >
+                ⚙️
               </button>
             </div>
           </div>
+
+          {/* Skip settings panel */}
+          {showSkipSettings && (
+            <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-white/90">
+              <label className="flex items-center gap-1.5">
+                片头
+                <input
+                  type="number"
+                  min={0}
+                  max={600}
+                  value={skipIntroSec}
+                  onChange={(e) => setSkipIntroSec(Math.max(0, Number(e.target.value)))}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                />
+                秒
+              </label>
+              <label className="flex items-center gap-1.5">
+                片尾
+                <input
+                  type="number"
+                  min={0}
+                  max={600}
+                  value={skipOutroSec}
+                  onChange={(e) => setSkipOutroSec(Math.max(0, Number(e.target.value)))}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                />
+                秒
+              </label>
+            </div>
+          )}
         </div>
       </div>
     </div>
