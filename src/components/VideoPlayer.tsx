@@ -56,6 +56,9 @@ export default function VideoPlayer({
   hasNextEpisode = false,
   hasPrevEpisode = false,
   currentEpisodeName,
+  episodes = [],
+  currentEpisodeIndex = 0,
+  onEpisodeSelect,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
