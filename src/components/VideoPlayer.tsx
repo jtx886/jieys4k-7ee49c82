@@ -60,10 +60,12 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
   } | null>(null);
   const [brightness, setBrightness] = useState(1);
 
-  // Long press state
+  // Long press & double tap state
   const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
   const [isLongPress, setIsLongPress] = useState(false);
   const prevSpeed = useRef(1);
+  const tapTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tapCount = useRef(0);
 
   // Skip seconds state
   const [skipIntroSec, setSkipIntroSec] = useState(DEFAULT_SKIP_INTRO_SEC);
