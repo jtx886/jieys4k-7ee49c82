@@ -28,8 +28,8 @@ const RATIO_OPTIONS = [
   { label: "4:3", value: "4/3" },
   { label: "填充", value: "fill" },
 ];
-const SKIP_INTRO_SEC = 0;
-const SKIP_OUTRO_SEC = 0;
+const DEFAULT_SKIP_INTRO_SEC = 0;
+const DEFAULT_SKIP_OUTRO_SEC = 0;
 
 export default function VideoPlayer({ url, onProgress, initialProgress }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
