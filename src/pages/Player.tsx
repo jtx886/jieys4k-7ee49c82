@@ -224,7 +224,7 @@ export default function PlayerPage() {
               {episodes.map((ep, i) => (
                 <button
                   key={i}
-                  onClick={() => { setCurrentEp(i); setInitialProgress(0); }}
+                  onClick={() => { setCurrentEp(i); setInitialProgress(0); setAutoPlay(true); }}
                   className={`px-2 py-2 rounded-lg text-xs font-medium transition-all truncate ${
                     i === currentEp
                       ? "gradient-btn text-primary-foreground"

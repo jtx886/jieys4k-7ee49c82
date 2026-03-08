@@ -540,12 +540,27 @@ export default function VideoPlayer({
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {/* Previous episode */}
+              {hasPrevEpisode && (
+                <button 
+                  onClick={onPrevEpisode} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  title="上一集"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
                 跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
               </button>
               <span className="text-white/80 text-xs tabular-nums">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
+              {currentEpisodeName && (
+                <span className="text-white/60 text-xs hidden sm:inline">
+                  {currentEpisodeName}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button onClick={skipOutro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
@@ -557,6 +572,16 @@ export default function VideoPlayer({
               >
                 ⚙️
               </button>
+              {/* Next episode */}
+              {hasNextEpisode && (
+                <button 
+                  onClick={onNextEpisode} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  title="下一集"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
