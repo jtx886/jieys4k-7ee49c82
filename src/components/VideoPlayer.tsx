@@ -364,7 +364,7 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
       ref={containerRef}
       className={`relative w-full bg-black rounded-xl overflow-hidden select-none ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : "aspect-video"}`}
       onMouseMove={showControlsBriefly}
-      onClick={togglePlay}
+      onClick={handleTap}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
