@@ -60,10 +60,12 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
   } | null>(null);
   const [brightness, setBrightness] = useState(1);
 
-  // Long press state
+  // Long press & double tap state
   const longPressTimer = useRef<ReturnType<typeof setTimeout>>();
   const [isLongPress, setIsLongPress] = useState(false);
   const prevSpeed = useRef(1);
+  const tapTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tapCount = useRef(0);
 
   // Skip seconds state
   const [skipIntroSec, setSkipIntroSec] = useState(DEFAULT_SKIP_INTRO_SEC);
@@ -314,16 +316,28 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
     showControlsBriefly();
   };
 
-  // ---- Play/Pause toggle ----
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => {});
-    } else {
-      video.pause();
+  // ---- Double tap to play/pause, single tap to show controls ----
+  const handleTap = () => {
+    tapCount.current += 1;
+    if (tapCount.current === 1) {
+      tapTimer.current = setTimeout(() => {
+        // Single tap: just show/hide controls
+        tapCount.current = 0;
+        showControlsBriefly();
+      }, 300);
+    } else if (tapCount.current >= 2) {
+      // Double tap: toggle play/pause
+      if (tapTimer.current) clearTimeout(tapTimer.current);
+      tapCount.current = 0;
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+      showControlsBriefly();
     }
-    showControlsBriefly();
   };
 
   // ---- Progress bar seek ----
@@ -350,7 +364,7 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
       ref={containerRef}
       className={`relative w-full bg-black rounded-xl overflow-hidden select-none ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : "aspect-video"}`}
       onMouseMove={showControlsBriefly}
-      onClick={togglePlay}
+      onClick={handleTap}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -404,7 +418,7 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
         className={`absolute inset-0 z-10 transition-opacity duration-300 ${showControls || paused ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={(e) => {
           e.stopPropagation();
-          togglePlay();
+          handleTap();
         }}
       >
         {/* Top bar */}
