@@ -218,10 +218,10 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
   // ---- Skip intro/outro ----
   const skipIntro = () => {
-    if (videoRef.current) videoRef.current.currentTime = Math.min(SKIP_INTRO_SEC, duration);
+    if (videoRef.current) videoRef.current.currentTime = Math.min(skipIntroSec, duration);
   };
   const skipOutro = () => {
-    if (videoRef.current && duration) videoRef.current.currentTime = Math.max(0, duration - SKIP_OUTRO_SEC);
+    if (videoRef.current && duration) videoRef.current.currentTime = Math.max(0, duration - skipOutroSec);
   };
 
   // ---- Gesture handling (touch) ----
