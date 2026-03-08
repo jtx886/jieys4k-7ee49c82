@@ -72,7 +72,6 @@ export default function PlayerPage() {
       .then(({ data }) => setIsFav(!!data));
   }, [user, id]);
 
-  // Save watch history - debounced to avoid too many writes
   const saveHistory = useCallback((progress: number) => {
     if (!user || !video) return;
     // Only save if progress changed significantly (>2%)
@@ -90,6 +89,22 @@ export default function PlayerPage() {
       watched_at: new Date().toISOString(),
     }, { onConflict: "user_id,vod_id" }).then(() => {});
   }, [user, video, currentEp, episodes]);
+
+  const handleNextEpisode = useCallback(() => {
+    if (currentEp < episodes.length - 1) {
+      setCurrentEp(currentEp + 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp, episodes.length]);
+
+  const handlePrevEpisode = useCallback(() => {
+    if (currentEp > 0) {
+      setCurrentEp(currentEp - 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp]);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -136,22 +151,6 @@ export default function PlayerPage() {
       </div>
     );
   }
-
-  const handleNextEpisode = useCallback(() => {
-    if (currentEp < episodes.length - 1) {
-      setCurrentEp(currentEp + 1);
-      setInitialProgress(0);
-      setAutoPlay(true);
-    }
-  }, [currentEp, episodes.length]);
-
-  const handlePrevEpisode = useCallback(() => {
-    if (currentEp > 0) {
-      setCurrentEp(currentEp - 1);
-      setInitialProgress(0);
-      setAutoPlay(true);
-    }
-  }, [currentEp]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
