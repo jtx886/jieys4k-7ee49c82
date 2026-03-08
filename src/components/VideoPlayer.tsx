@@ -354,8 +354,14 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ filter: `brightness(${brightness})` }}
     >
+      {/* Brightness overlay - dims the screen like real brightness */}
+      {brightness < 1 && (
+        <div
+          className="absolute inset-0 bg-black pointer-events-none z-[5]"
+          style={{ opacity: 1 - brightness }}
+        />
+      )}
       {/* Loading */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
