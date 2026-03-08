@@ -152,7 +152,7 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
                   {history.map((item) => (
-                    <Link key={item.id} to={`/player/${item.vod_id}`} className="group card-hover block">
+                    <Link key={item.id} to={`/player/${item.vod_id}?auto=1`} className="group card-hover block">
                       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-secondary">
                         <img
                           src={item.vod_pic || "/placeholder.svg"}
