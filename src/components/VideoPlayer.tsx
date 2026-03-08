@@ -13,12 +13,19 @@ import {
   Maximize,
   Minimize,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 interface VideoPlayerProps {
   url: string;
   onProgress?: (progress: number) => void;
   initialProgress?: number; // 0-1
+  autoPlay?: boolean;
+  onNextEpisode?: () => void;
+  onPrevEpisode?: () => void;
+  hasNextEpisode?: boolean;
+  hasPrevEpisode?: boolean;
+  currentEpisodeName?: string;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
@@ -31,7 +38,17 @@ const RATIO_OPTIONS = [
 const DEFAULT_SKIP_INTRO_SEC = 0;
 const DEFAULT_SKIP_OUTRO_SEC = 0;
 
-export default function VideoPlayer({ url, onProgress, initialProgress }: VideoPlayerProps) {
+export default function VideoPlayer({ 
+  url, 
+  onProgress, 
+  initialProgress, 
+  autoPlay = false,
+  onNextEpisode,
+  onPrevEpisode,
+  hasNextEpisode = false,
+  hasPrevEpisode = false,
+  currentEpisodeName,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
