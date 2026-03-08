@@ -110,11 +110,16 @@ export default function VideoPlayer({
 
     const onReady = () => {
       setLoading(false);
-      setPaused(true);
       // Apply initial progress
       if (initialProgress && initialProgress > 0 && initialProgress < 0.98 && video.duration) {
         video.currentTime = video.duration * initialProgress;
         progressApplied.current = true;
+      }
+      // Auto-play if requested
+      if (autoPlay) {
+        video.play().catch(() => {});
+      } else {
+        setPaused(true);
       }
     };
 
