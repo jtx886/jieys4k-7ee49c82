@@ -60,7 +60,7 @@ export default function Index() {
             <span className="gradient-text">JIE影视4K</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            免费在线观看高清电影、电视剧、动漫 · 无广告 · 支持4K
+            免费在线观看高清电影、电视剧、动漫 · 视频资源中的广告请勿相信 · 支持4K
           </p>
         </motion.div>
 
