@@ -10,7 +10,7 @@ export default function Header() {
   const [suggestions, setSuggestions] = useState<VodItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLFormElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
