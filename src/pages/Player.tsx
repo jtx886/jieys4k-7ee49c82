@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { getVideoDetail, parsePlayUrls, type VodItem } from "@/lib/videoApi";
 import VideoPlayer from "@/components/VideoPlayer";
 import Header from "@/components/Header";
@@ -12,19 +12,26 @@ import { motion } from "framer-motion";
 
 export default function PlayerPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [video, setVideo] = useState<VodItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentEp, setCurrentEp] = useState(0);
   const [isFav, setIsFav] = useState(false);
   const [initialProgress, setInitialProgress] = useState(0);
+  const [autoPlay, setAutoPlay] = useState(false);
   const { user } = useAuth();
   const lastSavedProgress = useRef(0);
+  const historyLoaded = useRef(false);
+
+  // Check if coming from history (auto param)
+  const fromHistory = searchParams.get("auto") === "1";
 
   const episodes = video ? parsePlayUrls(video.vod_play_url?.split("$$$")[0] || "") : [];
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    historyLoaded.current = false;
     getVideoDetail(id).then((data) => {
       setVideo(data);
       setLoading(false);
@@ -33,7 +40,7 @@ export default function PlayerPage() {
 
   // Load saved progress from history
   useEffect(() => {
-    if (!user || !id) return;
+    if (!user || !id || historyLoaded.current) return;
     supabase.from("watch_history")
       .select("progress, episode")
       .eq("user_id", user.id)
@@ -42,6 +49,7 @@ export default function PlayerPage() {
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
+        historyLoaded.current = true;
         if (data?.progress && data.progress > 0 && data.progress < 0.98) {
           setInitialProgress(data.progress);
           // Try to restore episode
@@ -50,8 +58,12 @@ export default function PlayerPage() {
             if (epIdx >= 0) setCurrentEp(epIdx);
           }
         }
+        // Auto-play if coming from history
+        if (fromHistory) {
+          setAutoPlay(true);
+        }
       });
-  }, [user, id, episodes.length]);
+  }, [user, id, episodes.length, fromHistory]);
 
   // Check favorite status
   useEffect(() => {
@@ -60,7 +72,6 @@ export default function PlayerPage() {
       .then(({ data }) => setIsFav(!!data));
   }, [user, id]);
 
-  // Save watch history - debounced to avoid too many writes
   const saveHistory = useCallback((progress: number) => {
     if (!user || !video) return;
     // Only save if progress changed significantly (>2%)
@@ -78,6 +89,22 @@ export default function PlayerPage() {
       watched_at: new Date().toISOString(),
     }, { onConflict: "user_id,vod_id" }).then(() => {});
   }, [user, video, currentEp, episodes]);
+
+  const handleNextEpisode = useCallback(() => {
+    if (currentEp < episodes.length - 1) {
+      setCurrentEp(currentEp + 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp, episodes.length]);
+
+  const handlePrevEpisode = useCallback(() => {
+    if (currentEp > 0) {
+      setCurrentEp(currentEp - 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp]);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -135,6 +162,12 @@ export default function PlayerPage() {
             url={episodes[currentEp]?.url || ""}
             onProgress={saveHistory}
             initialProgress={initialProgress}
+            autoPlay={autoPlay}
+            onNextEpisode={handleNextEpisode}
+            onPrevEpisode={handlePrevEpisode}
+            hasNextEpisode={currentEp < episodes.length - 1}
+            hasPrevEpisode={currentEp > 0}
+            currentEpisodeName={episodes[currentEp]?.name}
           />
         </motion.div>
 
@@ -190,7 +223,7 @@ export default function PlayerPage() {
               {episodes.map((ep, i) => (
                 <button
                   key={i}
-                  onClick={() => { setCurrentEp(i); setInitialProgress(0); }}
+                  onClick={() => { setCurrentEp(i); setInitialProgress(0); setAutoPlay(true); }}
                   className={`px-2 py-2 rounded-lg text-xs font-medium transition-all truncate ${
                     i === currentEp
                       ? "gradient-btn text-primary-foreground"

@@ -13,12 +13,19 @@ import {
   Maximize,
   Minimize,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 interface VideoPlayerProps {
   url: string;
   onProgress?: (progress: number) => void;
   initialProgress?: number; // 0-1
+  autoPlay?: boolean;
+  onNextEpisode?: () => void;
+  onPrevEpisode?: () => void;
+  hasNextEpisode?: boolean;
+  hasPrevEpisode?: boolean;
+  currentEpisodeName?: string;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
@@ -31,7 +38,17 @@ const RATIO_OPTIONS = [
 const DEFAULT_SKIP_INTRO_SEC = 0;
 const DEFAULT_SKIP_OUTRO_SEC = 0;
 
-export default function VideoPlayer({ url, onProgress, initialProgress }: VideoPlayerProps) {
+export default function VideoPlayer({ 
+  url, 
+  onProgress, 
+  initialProgress, 
+  autoPlay = false,
+  onNextEpisode,
+  onPrevEpisode,
+  hasNextEpisode = false,
+  hasPrevEpisode = false,
+  currentEpisodeName,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -93,11 +110,16 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
     const onReady = () => {
       setLoading(false);
-      setPaused(true);
       // Apply initial progress
       if (initialProgress && initialProgress > 0 && initialProgress < 0.98 && video.duration) {
         video.currentTime = video.duration * initialProgress;
         progressApplied.current = true;
+      }
+      // Auto-play if requested
+      if (autoPlay) {
+        video.play().catch(() => {});
+      } else {
+        setPaused(true);
       }
     };
 
@@ -518,12 +540,27 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {/* Previous episode */}
+              {hasPrevEpisode && (
+                <button 
+                  onClick={onPrevEpisode} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  title="上一集"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
                 跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
               </button>
               <span className="text-white/80 text-xs tabular-nums">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
+              {currentEpisodeName && (
+                <span className="text-white/60 text-xs hidden sm:inline">
+                  {currentEpisodeName}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button onClick={skipOutro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
@@ -535,6 +572,16 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
               >
                 ⚙️
               </button>
+              {/* Next episode */}
+              {hasNextEpisode && (
+                <button 
+                  onClick={onNextEpisode} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  title="下一集"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
