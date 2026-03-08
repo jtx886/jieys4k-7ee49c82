@@ -15,7 +15,7 @@ export default function Footer() {
           作者：杰同学🐾
         </p>
         <p className="text-xs text-muted-foreground">
-          本站资源均来自互联网，仅供学习交流使用
+          视频资源中的广告请勿相信
         </p>
       </div>
     </footer>
