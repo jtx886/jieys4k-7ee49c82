@@ -76,7 +76,7 @@ export default function PlayerPage() {
       episode: episodes[currentEp]?.name || "",
       progress,
       watched_at: new Date().toISOString(),
-    }, { onConflict: "id" }).then(() => {});
+    }, { onConflict: "user_id,vod_id" }).then(() => {});
   }, [user, video, currentEp, episodes]);
 
   const toggleFavorite = async () => {
