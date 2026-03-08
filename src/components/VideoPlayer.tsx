@@ -100,6 +100,9 @@ export default function VideoPlayer({
   const [skipOutroSec, setSkipOutroSec] = useState(DEFAULT_SKIP_OUTRO_SEC);
   const [showSkipSettings, setShowSkipSettings] = useState(false);
 
+  // Episode list state
+  const [showEpisodeList, setShowEpisodeList] = useState(false);
+
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
