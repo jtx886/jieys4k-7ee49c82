@@ -74,5 +74,5 @@ export const CATEGORIES = [
   { id: 2, name: "电视剧" },
   { id: 3, name: "综艺" },
   { id: 4, name: "动漫" },
-  { id: 13, name: "动画片" },
+  { id: 39, name: "动画片" },
 ];
