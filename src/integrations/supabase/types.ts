@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          vod_id: string
+          vod_name: string
+          vod_pic: string | null
+          vod_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          vod_id: string
+          vod_name: string
+          vod_pic?: string | null
+          vod_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          vod_id?: string
+          vod_name?: string
+          vod_pic?: string | null
+          vod_type?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      watch_history: {
+        Row: {
+          episode: string | null
+          id: string
+          progress: number | null
+          user_id: string
+          vod_id: string
+          vod_name: string
+          vod_pic: string | null
+          vod_type: string | null
+          watched_at: string
+        }
+        Insert: {
+          episode?: string | null
+          id?: string
+          progress?: number | null
+          user_id: string
+          vod_id: string
+          vod_name: string
+          vod_pic?: string | null
+          vod_type?: string | null
+          watched_at?: string
+        }
+        Update: {
+          episode?: string | null
+          id?: string
+          progress?: number | null
+          user_id?: string
+          vod_id?: string
+          vod_name?: string
+          vod_pic?: string | null
+          vod_type?: string | null
+          watched_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
