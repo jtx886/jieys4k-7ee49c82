@@ -418,7 +418,7 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
         className={`absolute inset-0 z-10 transition-opacity duration-300 ${showControls || paused ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={(e) => {
           e.stopPropagation();
-          togglePlay();
+          handleTap();
         }}
       >
         {/* Top bar */}
