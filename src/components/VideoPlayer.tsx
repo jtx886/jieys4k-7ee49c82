@@ -228,14 +228,46 @@ export default function VideoPlayer({
     if (!document.fullscreenElement) {
       await el.requestFullscreen?.();
       setIsFullscreen(true);
+      // Auto rotate to landscape when entering fullscreen
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape').catch(() => {
+            // Fallback to any landscape orientation if specific orientation fails
+            screen.orientation.lock('landscape-primary').catch(() => {});
+          });
+        }
+      } catch (error) {
+        console.log('Screen orientation lock not supported');
+      }
     } else {
       await document.exitFullscreen?.();
       setIsFullscreen(false);
+      // Unlock orientation when exiting fullscreen
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch (error) {
+        console.log('Screen orientation unlock not supported');
+      }
     }
   };
 
   useEffect(() => {
-    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    const onFs = () => {
+      const isFull = !!document.fullscreenElement;
+      setIsFullscreen(isFull);
+      // Unlock orientation when exiting fullscreen via ESC or other means
+      if (!isFull) {
+        try {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+        } catch (error) {
+          console.log('Screen orientation unlock not supported');
+        }
+      }
+    };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
