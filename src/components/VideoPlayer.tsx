@@ -316,16 +316,28 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
     showControlsBriefly();
   };
 
-  // ---- Play/Pause toggle ----
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => {});
-    } else {
-      video.pause();
+  // ---- Double tap to play/pause, single tap to show controls ----
+  const handleTap = () => {
+    tapCount.current += 1;
+    if (tapCount.current === 1) {
+      tapTimer.current = setTimeout(() => {
+        // Single tap: just show/hide controls
+        tapCount.current = 0;
+        showControlsBriefly();
+      }, 300);
+    } else if (tapCount.current >= 2) {
+      // Double tap: toggle play/pause
+      if (tapTimer.current) clearTimeout(tapTimer.current);
+      tapCount.current = 0;
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.paused) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+      showControlsBriefly();
     }
-    showControlsBriefly();
   };
 
   // ---- Progress bar seek ----
