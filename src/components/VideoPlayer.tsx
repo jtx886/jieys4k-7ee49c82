@@ -277,19 +277,24 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
       }
     }
 
+    // Prevent default to avoid scroll interference with gestures
+    e.preventDefault();
+
     const video = videoRef.current;
     if (!video) return;
 
     if (g.type === "volume") {
-      const delta = -dy / rect.height;
+      const delta = -dy / (rect.height * 0.8);
       const newVol = Math.max(0, Math.min(1, g.startVolume + delta));
       video.volume = newVol;
+      video.muted = false;
       setGestureInfo(`🔊 音量 ${Math.round(newVol * 100)}%`);
     } else if (g.type === "brightness") {
-      const delta = -dy / rect.height;
-      const newB = Math.max(0.2, Math.min(1.5, g.startBrightness + delta));
+      const delta = -dy / (rect.height * 0.8);
+      // Use a darker overlay approach: 0.3 (very dim) to 1.0 (normal)
+      const newB = Math.max(0.3, Math.min(1, g.startBrightness + delta));
       setBrightness(newB);
-      setGestureInfo(`☀️ 亮度 ${Math.round((newB / 1.5) * 100)}%`);
+      setGestureInfo(`☀️ 亮度 ${Math.round(newB * 100)}%`);
     } else if (g.type === "seek") {
       const seekDelta = (dx / rect.width) * (duration * 0.3);
       const newTime = Math.max(0, Math.min(duration, g.startTime + seekDelta));
