@@ -15,7 +15,7 @@ export default function Footer() {
           作者：杰同学🐾
         </p>
         <p className="text-xs text-muted-foreground">
-          视频资源中的广告请勿相信
+          该软件版权归杰同学所有
         </p>
       </div>
     </footer>
