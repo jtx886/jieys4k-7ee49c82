@@ -485,21 +485,57 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {/* Skip intro */}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片头
+                跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
               </button>
               <span className="text-white/80 text-xs tabular-nums">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {/* Skip outro */}
               <button onClick={skipOutro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片尾
+                跳过片尾{skipOutroSec > 0 ? ` ${skipOutroSec}s` : ""}
+              </button>
+              <button
+                onClick={() => setShowSkipSettings(!showSkipSettings)}
+                className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+              >
+                ⚙️
               </button>
             </div>
           </div>
+
+          {/* Skip settings panel */}
+          {showSkipSettings && (
+            <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-white/90">
+              <label className="flex items-center gap-1.5">
+                片头
+                <input
+                  type="number"
+                  min={0}
+                  max={600}
+                  value={skipIntroSec}
+                  onChange={(e) => setSkipIntroSec(Math.max(0, Number(e.target.value)))}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                />
+                秒
+              </label>
+              <label className="flex items-center gap-1.5">
+                片尾
+                <input
+                  type="number"
+                  min={0}
+                  max={600}
+                  value={skipOutroSec}
+                  onChange={(e) => setSkipOutroSec(Math.max(0, Number(e.target.value)))}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                />
+                秒
+              </label>
+            </div>
+          )}
         </div>
       </div>
     </div>
