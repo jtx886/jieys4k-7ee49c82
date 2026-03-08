@@ -16,6 +16,11 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
+export interface Episode {
+  name: string;
+  url: string;
+}
+
 interface VideoPlayerProps {
   url: string;
   onProgress?: (progress: number) => void;
@@ -26,6 +31,9 @@ interface VideoPlayerProps {
   hasNextEpisode?: boolean;
   hasPrevEpisode?: boolean;
   currentEpisodeName?: string;
+  episodes?: Episode[];
+  currentEpisodeIndex?: number;
+  onEpisodeSelect?: (index: number) => void;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
