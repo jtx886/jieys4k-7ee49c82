@@ -137,6 +137,22 @@ export default function PlayerPage() {
     );
   }
 
+  const handleNextEpisode = useCallback(() => {
+    if (currentEp < episodes.length - 1) {
+      setCurrentEp(currentEp + 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp, episodes.length]);
+
+  const handlePrevEpisode = useCallback(() => {
+    if (currentEp > 0) {
+      setCurrentEp(currentEp - 1);
+      setInitialProgress(0);
+      setAutoPlay(true);
+    }
+  }, [currentEp]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -147,6 +163,12 @@ export default function PlayerPage() {
             url={episodes[currentEp]?.url || ""}
             onProgress={saveHistory}
             initialProgress={initialProgress}
+            autoPlay={autoPlay}
+            onNextEpisode={handleNextEpisode}
+            onPrevEpisode={handlePrevEpisode}
+            hasNextEpisode={currentEp < episodes.length - 1}
+            hasPrevEpisode={currentEp > 0}
+            currentEpisodeName={episodes[currentEp]?.name}
           />
         </motion.div>
 
