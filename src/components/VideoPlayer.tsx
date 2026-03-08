@@ -483,7 +483,15 @@ export default function VideoPlayer({ url, onProgress, initialProgress }: VideoP
 
         {/* Center play/pause */}
         {paused && !loading && !error && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div
+            className="absolute inset-0 flex items-center justify-center z-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              const video = videoRef.current;
+              if (video) video.play().catch(() => {});
+              showControlsBriefly();
+            }}
+          >
             <div className="bg-black/50 rounded-full p-4">
               <Play className="w-10 h-10 text-white fill-white" />
             </div>
