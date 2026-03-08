@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const API_SOURCES = [
@@ -25,14 +25,19 @@ serve(async (req) => {
     const sourceIndex = parseInt(url.searchParams.get("source") || "0");
 
     const baseUrl = API_SOURCES[sourceIndex] || API_SOURCES[0];
-    let apiUrl = `${baseUrl}?ac=detail&pg=${pg}`;
 
-    if (action === "search" && wd) {
-      apiUrl += `&wd=${encodeURIComponent(wd)}`;
-    } else if (action === "detail" && ids) {
-      apiUrl += `&ids=${ids}`;
-    } else if (t) {
-      apiUrl += `&t=${t}`;
+    let apiUrl: string;
+
+    if (action === "detail" && ids) {
+      // Detail view - use ac=detail for full info
+      apiUrl = `${baseUrl}?ac=detail&ids=${ids}`;
+    } else if (action === "search" && wd) {
+      // Search - use ac=detail for full info
+      apiUrl = `${baseUrl}?ac=detail&pg=${pg}&wd=${encodeURIComponent(wd)}`;
+    } else {
+      // List/browse - use ac=list for category filtering, then fetch details
+      apiUrl = `${baseUrl}?ac=list&pg=${pg}`;
+      if (t) apiUrl += `&t=${t}`;
     }
 
     console.log(`Fetching: ${apiUrl}`);
@@ -44,6 +49,21 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+
+    // If we used ac=list, we got basic info. Now fetch details for those items.
+    if (action !== "detail" && action !== "search" && data.list && data.list.length > 0) {
+      const ids = data.list.map((item: any) => item.vod_id).join(",");
+      const detailUrl = `${baseUrl}?ac=detail&ids=${ids}`;
+      console.log(`Fetching details: ${detailUrl}`);
+      const detailResponse = await fetch(detailUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+      });
+      const detailData = await detailResponse.json();
+      // Keep pagination from list response but use detail data
+      data.list = detailData.list || [];
+    }
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
