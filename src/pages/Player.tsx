@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { getVideoDetail, parsePlayUrls, type VodItem } from "@/lib/videoApi";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -16,7 +16,9 @@ export default function PlayerPage() {
   const [loading, setLoading] = useState(true);
   const [currentEp, setCurrentEp] = useState(0);
   const [isFav, setIsFav] = useState(false);
+  const [initialProgress, setInitialProgress] = useState(0);
   const { user } = useAuth();
+  const lastSavedProgress = useRef(0);
 
   const episodes = video ? parsePlayUrls(video.vod_play_url?.split("$$$")[0] || "") : [];
 
@@ -29,6 +31,28 @@ export default function PlayerPage() {
     }).catch(() => setLoading(false));
   }, [id]);
 
+  // Load saved progress from history
+  useEffect(() => {
+    if (!user || !id) return;
+    supabase.from("watch_history")
+      .select("progress, episode")
+      .eq("user_id", user.id)
+      .eq("vod_id", String(id))
+      .order("watched_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.progress && data.progress > 0 && data.progress < 0.98) {
+          setInitialProgress(data.progress);
+          // Try to restore episode
+          if (data.episode && episodes.length > 1) {
+            const epIdx = episodes.findIndex(e => e.name === data.episode);
+            if (epIdx >= 0) setCurrentEp(epIdx);
+          }
+        }
+      });
+  }, [user, id, episodes.length]);
+
   // Check favorite status
   useEffect(() => {
     if (!user || !id) return;
@@ -36,9 +60,13 @@ export default function PlayerPage() {
       .then(({ data }) => setIsFav(!!data));
   }, [user, id]);
 
-  // Save watch history
+  // Save watch history - debounced to avoid too many writes
   const saveHistory = useCallback((progress: number) => {
     if (!user || !video) return;
+    // Only save if progress changed significantly (>2%)
+    if (Math.abs(progress - lastSavedProgress.current) < 0.02) return;
+    lastSavedProgress.current = progress;
+
     supabase.from("watch_history").upsert({
       user_id: user.id,
       vod_id: String(video.vod_id),
@@ -106,6 +134,7 @@ export default function PlayerPage() {
           <VideoPlayer
             url={episodes[currentEp]?.url || ""}
             onProgress={saveHistory}
+            initialProgress={initialProgress}
           />
         </motion.div>
 
@@ -161,7 +190,7 @@ export default function PlayerPage() {
               {episodes.map((ep, i) => (
                 <button
                   key={i}
-                  onClick={() => setCurrentEp(i)}
+                  onClick={() => { setCurrentEp(i); setInitialProgress(0); }}
                   className={`px-2 py-2 rounded-lg text-xs font-medium transition-all truncate ${
                     i === currentEp
                       ? "gradient-btn text-primary-foreground"
