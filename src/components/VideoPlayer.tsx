@@ -600,10 +600,10 @@ export default function VideoPlayer({
               {hasPrevEpisode && (
                 <button 
                   onClick={onPrevEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
                   title="上一集"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  上一集
                 </button>
               )}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
@@ -628,14 +628,24 @@ export default function VideoPlayer({
               >
                 ⚙️
               </button>
+              {/* Episode list button */}
+              {episodes.length > 0 && (
+                <button 
+                  onClick={() => setShowEpisodeList(!showEpisodeList)} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
+                  title="选集"
+                >
+                  选集
+                </button>
+              )}
               {/* Next episode */}
               {hasNextEpisode && (
                 <button 
                   onClick={onNextEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
                   title="下一集"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  下一集
                 </button>
               )}
             </div>
