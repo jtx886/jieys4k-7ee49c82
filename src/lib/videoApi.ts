@@ -1,13 +1,8 @@
-const API_SOURCES = [
-  {
-    name: "百度资源",
-    base: "https://api.apibdzy.com/api.php/provide/vod/",
-  },
-  {
-    name: "OK资源",
-    base: "https://okzyw9.com/api.php/provide/vod/",
-  },
-];
+// 光速资源站 - 稳定无广告高清资源
+const API_SOURCE = {
+  name: "光速资源",
+  base: "https://api.guangsuapi.com/api.php/provide/vod/",
+};
 
 export interface VodItem {
   vod_id: number;
