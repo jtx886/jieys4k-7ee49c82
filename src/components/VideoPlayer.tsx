@@ -14,7 +14,6 @@ import {
   Minimize,
   ChevronRight,
   ChevronLeft,
-  } from "lucide-react";
 } from "lucide-react";
 
 export interface Episode {
