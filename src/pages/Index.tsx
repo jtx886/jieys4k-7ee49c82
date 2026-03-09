@@ -50,18 +50,34 @@ export default function Index() {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-6 space-y-6">
-        {/* Hero */}
+        {/* Hero Section - Premium Design */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-6 sm:p-8"
+          className="glass-strong rounded-3xl p-8 sm:p-10 relative overflow-hidden"
         >
-          <h1 className="text-2xl sm:text-3xl font-display font-bold">
-            <span className="gradient-text">JIE影视4K</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            免费在线观看高清电影、电视剧、动漫 · 视频资源中的广告请勿相信 · 支持4K
-          </p>
+          {/* Decorative gradient orb */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl opacity-50" />
+          
+          <div className="relative z-10">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold">
+              <span className="gradient-text">JIE影视4K</span>
+            </h1>
+            <p className="text-muted-foreground mt-3 text-sm sm:text-base max-w-2xl leading-relaxed">
+              🎬 高清无广告4K画质影视平台 · 海量蓝光资源免费观看
+            </p>
+            <div className="flex flex-wrap gap-3 mt-5">
+              <div className="glass px-4 py-2 rounded-full text-xs sm:text-sm text-foreground/90">
+                ⚡ 极速加载
+              </div>
+              <div className="glass px-4 py-2 rounded-full text-xs sm:text-sm text-foreground/90">
+                🎯 精准搜索
+              </div>
+              <div className="glass px-4 py-2 rounded-full text-xs sm:text-sm text-foreground/90">
+                📱 全平台支持
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Categories */}

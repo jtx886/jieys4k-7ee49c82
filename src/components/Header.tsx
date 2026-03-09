@@ -156,9 +156,9 @@ export default function Header() {
               </div>
             )}
 
-            {/* History dropdown */}
+            {/* Premium history dropdown */}
             {showHistory && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute left-0 right-0 top-full mt-2 glass-strong border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-3xl">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border">
                   <p className="text-xs text-muted-foreground">搜索历史</p>
                   <button
