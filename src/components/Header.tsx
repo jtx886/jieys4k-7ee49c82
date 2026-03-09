@@ -93,10 +93,10 @@ export default function Header() {
   return (
     <header className="glass-strong sticky top-0 z-50 border-b border-white/5 shadow-xl">
       <div className="container mx-auto px-4 py-3.5 flex items-center gap-3">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg gradient-btn flex items-center justify-center">
-            <Film className="w-4 h-4 text-primary-foreground" />
+        {/* Premium Logo */}
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="w-9 h-9 rounded-xl gradient-btn flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+            <Film className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display font-bold text-lg gradient-text hidden sm:block">
             JIE影视4K
