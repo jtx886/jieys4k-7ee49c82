@@ -62,12 +62,12 @@ export function parsePlayUrls(playUrl: string): { name: string; url: string }[] 
   }).filter(item => item.url);
 }
 
-// Category IDs for MacCMS standard
+// Category IDs for 光速资源站
 export const CATEGORIES = [
   { id: 0, name: "推荐" },
   { id: 1, name: "电影" },
   { id: 2, name: "电视剧" },
   { id: 3, name: "综艺" },
   { id: 4, name: "动漫" },
-  { id: 39, name: "动画片" },
+  { id: 20, name: "动画电影" },
 ];
