@@ -250,33 +250,74 @@ export default function VideoPlayer({
   };
 
   // ---- Fullscreen ----
+  const shouldRotateLandscape = isFullscreen && isPortrait && orientationLockFailed;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    update();
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+
   const toggleFullscreen = async () => {
     const el = containerRef.current;
     if (!el) return;
-    if (!document.fullscreenElement) {
-      await el.requestFullscreen?.();
-      setIsFullscreen(true);
-      // Auto rotate to landscape when entering fullscreen
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape').catch(() => {
-            // Fallback to any landscape orientation if specific orientation fails
-            screen.orientation.lock('landscape-primary').catch(() => {});
-          });
+
+    const supportsOrientationLock =
+      typeof screen !== "undefined" &&
+      !!screen.orientation &&
+      typeof screen.orientation.lock === "function";
+
+    const supportsOrientationUnlock =
+      typeof screen !== "undefined" &&
+      !!screen.orientation &&
+      typeof screen.orientation.unlock === "function";
+
+    if (!isFullscreen) {
+      setOrientationLockFailed(false);
+
+      // Try native fullscreen first; if not supported, fall back to "pseudo" fullscreen (fixed positioning)
+      if (el.requestFullscreen) {
+        try {
+          await el.requestFullscreen();
+        } catch {
+          // Ignore; we'll still enter pseudo fullscreen
         }
-      } catch (error) {
-        console.log('Screen orientation lock not supported');
+      }
+
+      setIsFullscreen(true);
+
+      // Try to force landscape on supported browsers; if it fails, we'll rotate via CSS as a fallback.
+      if (supportsOrientationLock) {
+        try {
+          await screen.orientation.lock("landscape");
+        } catch {
+          setOrientationLockFailed(true);
+        }
+      } else {
+        setOrientationLockFailed(true);
       }
     } else {
-      await document.exitFullscreen?.();
-      setIsFullscreen(false);
-      // Unlock orientation when exiting fullscreen
       try {
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
         }
-      } catch (error) {
-        console.log('Screen orientation unlock not supported');
+      } catch {
+        // Ignore
+      }
+
+      setIsFullscreen(false);
+      setOrientationLockFailed(false);
+
+      try {
+        if (supportsOrientationUnlock) screen.orientation.unlock();
+      } catch {
+        // Ignore
       }
     }
   };
@@ -285,14 +326,14 @@ export default function VideoPlayer({
     const onFs = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
-      // Unlock orientation when exiting fullscreen via ESC or other means
       if (!isFull) {
+        setOrientationLockFailed(false);
         try {
           if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
           }
-        } catch (error) {
-          console.log('Screen orientation unlock not supported');
+        } catch {
+          // Ignore
         }
       }
     };
