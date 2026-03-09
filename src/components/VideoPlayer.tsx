@@ -73,6 +73,10 @@ export default function VideoPlayer({
   const [ratioIdx, setRatioIdx] = useState(0);
   const [showRatioMenu, setShowRatioMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [orientationLockFailed, setOrientationLockFailed] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight > window.innerWidth : false
+  );
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout>>();
 
