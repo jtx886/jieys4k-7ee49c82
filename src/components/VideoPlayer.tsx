@@ -14,6 +14,7 @@ import {
   Minimize,
   ChevronRight,
   ChevronLeft,
+  RotateCw,
 } from "lucide-react";
 
 export interface Episode {
@@ -114,6 +115,9 @@ export default function VideoPlayer({
 
   // Episode list state
   const [showEpisodeList, setShowEpisodeList] = useState(false);
+
+  // Rotation state
+  const [rotation, setRotation] = useState(0);
 
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
@@ -569,6 +573,10 @@ export default function VideoPlayer({
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
+  const handleRotate = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -584,7 +592,11 @@ export default function VideoPlayer({
               left: "50%",
               width: "100vh",
               height: "100vw",
-              transform: "translate(-50%, -50%) rotate(90deg)",
+              transform: `translate(-50%, -50%) rotate(${90 + rotation}deg)`,
+            }
+          : rotation !== 0
+          ? {
+              transform: `rotate(${rotation}deg)`,
             }
           : undefined
       }
@@ -651,6 +663,15 @@ export default function VideoPlayer({
           className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Rotate button */}
+          <button
+            onClick={handleRotate}
+            className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+            title="旋转屏幕"
+          >
+            <RotateCw className="w-4 h-4" />
+          </button>
+
           {/* Ratio button */}
           <div className="relative">
             <button
