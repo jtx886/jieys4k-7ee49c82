@@ -116,6 +116,9 @@ export default function VideoPlayer({
   // Episode list state
   const [showEpisodeList, setShowEpisodeList] = useState(false);
 
+  // Rotation state
+  const [rotation, setRotation] = useState(0);
+
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
