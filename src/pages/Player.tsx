@@ -168,6 +168,9 @@ export default function PlayerPage() {
             hasNextEpisode={currentEp < episodes.length - 1}
             hasPrevEpisode={currentEp > 0}
             currentEpisodeName={episodes[currentEp]?.name}
+            episodes={episodes}
+            currentEpisodeIndex={currentEp}
+            onEpisodeSelect={(i) => { setCurrentEp(i); setInitialProgress(0); setAutoPlay(true); }}
           />
         </motion.div>
 
