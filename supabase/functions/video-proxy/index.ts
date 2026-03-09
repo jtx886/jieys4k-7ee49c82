@@ -6,8 +6,9 @@ const corsHeaders = {
 };
 
 const API_SOURCES = [
-  "https://api.apibdzy.com/api.php/provide/vod/",
-  "https://okzyw9.com/api.php/provide/vod/",
+  "https://www.hongniuzy2.com/api.php/provide/vod/",
+  "https://api.guangsuapi.com/api.php/provide/vod/",
+  "https://suoniapi.com/api.php/provide/vod/",
 ];
 
 // Parent category -> sub-category mappings
