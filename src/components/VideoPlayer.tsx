@@ -14,7 +14,6 @@ import {
   Minimize,
   ChevronRight,
   ChevronLeft,
-  RotateCw,
 } from "lucide-react";
 
 export interface Episode {
@@ -530,14 +529,19 @@ export default function VideoPlayer({
     showControlsBriefly();
   };
 
-  // ---- Double tap to play/pause, single tap to show controls ----
+  // ---- Double tap to play/pause, single tap to toggle controls ----
   const handleTap = () => {
     tapCount.current += 1;
     if (tapCount.current === 1) {
       tapTimer.current = setTimeout(() => {
-        // Single tap: just show/hide controls
+        // Single tap: toggle controls immediately
         tapCount.current = 0;
-        showControlsBriefly();
+        if (showControls) {
+          if (hideControlsTimer.current) clearTimeout(hideControlsTimer.current);
+          setShowControls(false);
+        } else {
+          showControlsBriefly();
+        }
       }, 300);
     } else if (tapCount.current >= 2) {
       // Double tap: toggle play/pause
@@ -663,13 +667,24 @@ export default function VideoPlayer({
           className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Rotate button */}
+          {/* Episode list button - top right */}
+          {episodes.length > 0 && (
+            <button 
+              onClick={() => setShowEpisodeList(!showEpisodeList)} 
+              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
+              title="选集"
+            >
+              选集
+            </button>
+          )}
+
+          {/* Rotate button - text style */}
           <button
             onClick={handleRotate}
-            className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+            className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
             title="旋转屏幕"
           >
-            <RotateCw className="w-4 h-4" />
+            旋转屏幕
           </button>
 
           {/* Ratio button */}
@@ -796,16 +811,6 @@ export default function VideoPlayer({
               >
                 ⚙️
               </button>
-              {/* Episode list button */}
-              {episodes.length > 0 && (
-                <button 
-                  onClick={() => setShowEpisodeList(!showEpisodeList)} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
-                  title="选集"
-                >
-                  选集
-                </button>
-              )}
               {/* Next episode */}
               {hasNextEpisode && (
                 <button 
