@@ -123,12 +123,35 @@ export default function VideoPlayer({
   // ---- Video source loading ----
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !url) return;
+    if (!video) return;
 
-    setLoading(true);
+    // Reset basic state for a new source
     setError("");
+    setLoading(true);
+    setCurrentTime(0);
+    setDuration(0);
+    setPaused(true);
     progressApplied.current = false;
 
+    // If no url, show a friendly error instead of infinite loading
+    if (!url) {
+      try {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      } catch {
+        // ignore
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      setError("暂无播放地址");
+      setLoading(false);
+      return;
+    }
+
+    // Cleanup previous hls instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
@@ -136,18 +159,39 @@ export default function VideoPlayer({
 
     const onReady = () => {
       setLoading(false);
+
       // Apply initial progress
-      if (initialProgress && initialProgress > 0 && initialProgress < 0.98 && video.duration) {
+      if (
+        initialProgress &&
+        initialProgress > 0 &&
+        initialProgress < 0.98 &&
+        video.duration &&
+        isFinite(video.duration)
+      ) {
         video.currentTime = video.duration * initialProgress;
         progressApplied.current = true;
       }
+
       // Auto-play if requested
       if (autoPlay) {
         video.play().catch(() => {});
-      } else {
-        setPaused(true);
       }
     };
+
+    const onFatalError = (message: string) => {
+      setError(message);
+      setLoading(false);
+      setPaused(true);
+    };
+
+    // Force reload for some mobile browsers
+    try {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    } catch {
+      // ignore
+    }
 
     if (url.includes(".m3u8")) {
       if (Hls.isSupported()) {
@@ -158,24 +202,26 @@ export default function VideoPlayer({
         hls.on(Hls.Events.MANIFEST_PARSED, () => onReady());
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
-            setError("视频加载失败，请尝试其他源");
-            setLoading(false);
+            onFatalError("视频加载失败，请尝试其他源");
           }
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
+        video.load();
         video.addEventListener("loadedmetadata", onReady, { once: true });
+        video.addEventListener(
+          "error",
+          () => onFatalError("视频加载失败"),
+          { once: true }
+        );
       } else {
-        setError("您的浏览器不支持播放此视频格式");
-        setLoading(false);
+        onFatalError("您的浏览器不支持播放此视频格式");
       }
     } else {
       video.src = url;
-      video.addEventListener("loadeddata", onReady, { once: true });
-      video.addEventListener("error", () => {
-        setError("视频加载失败");
-        setLoading(false);
-      }, { once: true });
+      video.load();
+      video.addEventListener("loadedmetadata", onReady, { once: true });
+      video.addEventListener("error", () => onFatalError("视频加载失败"), { once: true });
     }
 
     return () => {
@@ -184,7 +230,7 @@ export default function VideoPlayer({
         hlsRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, initialProgress, autoPlay]);
 
   // Apply initial progress when duration becomes available
   useEffect(() => {
