@@ -72,7 +72,19 @@ export default function VideoPlayer({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [ratioIdx, setRatioIdx] = useState(0);
   const [showRatioMenu, setShowRatioMenu] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  type FullscreenMode = "none" | "browser" | "native" | "pseudo";
+  const [fullscreenMode, setFullscreenMode] = useState<FullscreenMode>("none");
+  const isFullscreen = fullscreenMode !== "none";
+
+  const [isPortrait, setIsPortrait] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(orientation: portrait)").matches
+      : false
+  );
+  const shouldRotateLandscape =
+    isFullscreen && fullscreenMode !== "native" && isPortrait;
+
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout>>();
 
