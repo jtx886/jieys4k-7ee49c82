@@ -663,6 +663,15 @@ export default function VideoPlayer({
           className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Rotate button */}
+          <button
+            onClick={handleRotate}
+            className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+            title="旋转屏幕"
+          >
+            <RotateCw className="w-4 h-4" />
+          </button>
+
           {/* Ratio button */}
           <div className="relative">
             <button
