@@ -1,7 +1,12 @@
-import { Search, User, Film, Home } from "lucide-react";
+import { Search, User, Film, Home, History, Trash2 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { searchVideos, type VodItem } from "@/lib/videoApi";
+import {
+  addSearchHistoryItem,
+  clearSearchHistory,
+  readSearchHistory,
+} from "@/lib/searchHistory";
 
 export default function Header() {
   const location = useLocation();
@@ -12,18 +17,30 @@ export default function Header() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const containerRef = useRef<HTMLFormElement>(null);
 
+  const [history, setHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    setHistory(readSearchHistory());
+  }, []);
+
+  const submitSearch = (q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setHistory(addSearchHistoryItem(trimmed));
+    setShowSuggestions(false);
+    setShowHistory(false);
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      setShowSuggestions(false);
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
+    submitSearch(searchQuery);
   };
 
   const handleSuggestionClick = (name: string) => {
     setSearchQuery(name);
-    setShowSuggestions(false);
-    navigate(`/search?q=${encodeURIComponent(name)}`);
+    submitSearch(name);
   };
 
   // Fetch suggestions with debounce
@@ -50,20 +67,22 @@ export default function Header() {
     };
   }, [searchQuery]);
 
-  // Close suggestions on click outside
+  // Close popovers on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        setShowHistory(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close suggestions on route change
+  // Close popovers on route change
   useEffect(() => {
     setShowSuggestions(false);
+    setShowHistory(false);
   }, [location.pathname, location.search]);
 
   const navItems = [
@@ -93,9 +112,27 @@ export default function Header() {
               placeholder="搜索电影、电视剧、动漫..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="w-full pl-10 pr-4 py-2 rounded-full bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              onFocus={() => {
+                if (suggestions.length > 0) setShowSuggestions(true);
+              }}
+              className="w-full pl-10 pr-12 py-2 rounded-full bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
+
+            {/* Search history button */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = readSearchHistory();
+                setHistory(next);
+                setShowHistory((v) => !v);
+                setShowSuggestions(false);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="搜索历史"
+              title="搜索历史"
+            >
+              <History className="w-4 h-4" />
+            </button>
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
@@ -116,6 +153,45 @@ export default function Header() {
                     </div>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* History dropdown */}
+            {showHistory && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                  <p className="text-xs text-muted-foreground">搜索历史</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearSearchHistory();
+                      setHistory([]);
+                      setShowHistory(false);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    清空
+                  </button>
+                </div>
+
+                {history.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-muted-foreground">暂无搜索历史</div>
+                ) : (
+                  <div className="max-h-72 overflow-auto">
+                    {history.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => handleSuggestionClick(q)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-accent transition-colors"
+                      >
+                        <History className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-foreground truncate">{q}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

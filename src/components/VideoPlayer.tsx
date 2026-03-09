@@ -72,7 +72,19 @@ export default function VideoPlayer({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [ratioIdx, setRatioIdx] = useState(0);
   const [showRatioMenu, setShowRatioMenu] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  type FullscreenMode = "none" | "browser" | "native" | "pseudo";
+  const [fullscreenMode, setFullscreenMode] = useState<FullscreenMode>("none");
+  const isFullscreen = fullscreenMode !== "none";
+
+  const [isPortrait, setIsPortrait] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(orientation: portrait)").matches
+      : false
+  );
+  const shouldRotateLandscape =
+    isFullscreen && fullscreenMode !== "native" && isPortrait;
+
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -111,12 +123,35 @@ export default function VideoPlayer({
   // ---- Video source loading ----
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !url) return;
+    if (!video) return;
 
-    setLoading(true);
+    // Reset basic state for a new source
     setError("");
+    setLoading(true);
+    setCurrentTime(0);
+    setDuration(0);
+    setPaused(true);
     progressApplied.current = false;
 
+    // If no url, show a friendly error instead of infinite loading
+    if (!url) {
+      try {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      } catch {
+        // ignore
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      setError("暂无播放地址");
+      setLoading(false);
+      return;
+    }
+
+    // Cleanup previous hls instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
@@ -124,18 +159,39 @@ export default function VideoPlayer({
 
     const onReady = () => {
       setLoading(false);
+
       // Apply initial progress
-      if (initialProgress && initialProgress > 0 && initialProgress < 0.98 && video.duration) {
+      if (
+        initialProgress &&
+        initialProgress > 0 &&
+        initialProgress < 0.98 &&
+        video.duration &&
+        isFinite(video.duration)
+      ) {
         video.currentTime = video.duration * initialProgress;
         progressApplied.current = true;
       }
+
       // Auto-play if requested
       if (autoPlay) {
         video.play().catch(() => {});
-      } else {
-        setPaused(true);
       }
     };
+
+    const onFatalError = (message: string) => {
+      setError(message);
+      setLoading(false);
+      setPaused(true);
+    };
+
+    // Force reload for some mobile browsers
+    try {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    } catch {
+      // ignore
+    }
 
     if (url.includes(".m3u8")) {
       if (Hls.isSupported()) {
@@ -146,24 +202,26 @@ export default function VideoPlayer({
         hls.on(Hls.Events.MANIFEST_PARSED, () => onReady());
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
-            setError("视频加载失败，请尝试其他源");
-            setLoading(false);
+            onFatalError("视频加载失败，请尝试其他源");
           }
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
+        video.load();
         video.addEventListener("loadedmetadata", onReady, { once: true });
+        video.addEventListener(
+          "error",
+          () => onFatalError("视频加载失败"),
+          { once: true }
+        );
       } else {
-        setError("您的浏览器不支持播放此视频格式");
-        setLoading(false);
+        onFatalError("您的浏览器不支持播放此视频格式");
       }
     } else {
       video.src = url;
-      video.addEventListener("loadeddata", onReady, { once: true });
-      video.addEventListener("error", () => {
-        setError("视频加载失败");
-        setLoading(false);
-      }, { once: true });
+      video.load();
+      video.addEventListener("loadedmetadata", onReady, { once: true });
+      video.addEventListener("error", () => onFatalError("视频加载失败"), { once: true });
     }
 
     return () => {
@@ -172,7 +230,7 @@ export default function VideoPlayer({
         hlsRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, initialProgress, autoPlay]);
 
   // Apply initial progress when duration becomes available
   useEffect(() => {
@@ -246,61 +304,128 @@ export default function VideoPlayer({
   };
 
   // ---- Fullscreen ----
-  const toggleFullscreen = async () => {
+  const lockLandscape = useCallback(async () => {
+    try {
+      await screen.orientation?.lock?.("landscape");
+    } catch {
+      // Some browsers (notably iOS Safari) don't support orientation lock.
+    }
+  }, []);
+
+  const unlockOrientation = useCallback(() => {
+    try {
+      screen.orientation?.unlock?.();
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
     const el = containerRef.current;
+    const video = videoRef.current as any;
     if (!el) return;
 
     if (!isFullscreen) {
-      // Enter fullscreen
-      try {
-        await el.requestFullscreen?.();
-      } catch (err) {
-        console.log("Fullscreen request failed:", err);
-      }
-      setIsFullscreen(true);
-
-      // Lock to landscape orientation (allows left/right rotation)
-      try {
-        if (screen.orientation?.lock) {
-          await screen.orientation.lock("landscape");
+      // Prefer real fullscreen when available
+      if (el.requestFullscreen) {
+        try {
+          await el.requestFullscreen();
+          setFullscreenMode("browser");
+          // Give the browser a tick to enter fullscreen before locking
+          setTimeout(() => {
+            lockLandscape();
+          }, 80);
+          return;
+        } catch {
+          // Fall through to pseudo
         }
-      } catch (err) {
-        // Orientation lock not supported or failed - user can manually rotate
-        console.log("Orientation lock not supported or failed:", err);
       }
+
+      // iOS Safari: prefer native fullscreen (auto-rotates)
+      if (video?.webkitEnterFullscreen) {
+        try {
+          video.webkitEnterFullscreen();
+          setFullscreenMode("native");
+          return;
+        } catch {
+          // Fall through
+        }
+      }
+
+      // Fallback: pseudo fullscreen (CSS)
+      setFullscreenMode("pseudo");
+      lockLandscape();
     } else {
       // Exit fullscreen
-      try {
-        await document.exitFullscreen?.();
-      } catch (err) {
-        console.log("Exit fullscreen failed:", err);
+      if (fullscreenMode === "browser") {
+        try {
+          await document.exitFullscreen?.();
+        } catch {
+          // ignore
+        }
       }
-      setIsFullscreen(false);
-
-      // Unlock orientation
-      try {
-        screen.orientation?.unlock();
-      } catch (err) {
-        console.log("Orientation unlock failed:", err);
-      }
+      setFullscreenMode("none");
+      unlockOrientation();
     }
-  };
+  }, [fullscreenMode, isFullscreen, lockLandscape, unlockOrientation]);
 
+  // Keep state in sync with browser fullscreen UI (ESC/back)
   useEffect(() => {
     const onFs = () => {
       const isFull = !!document.fullscreenElement;
-      setIsFullscreen(isFull);
-      // Unlock orientation when exiting fullscreen via ESC or back gesture
-      if (!isFull) {
-        try {
-          screen.orientation?.unlock();
-        } catch {
-          // Ignore
-        }
+      if (isFull) {
+        setFullscreenMode("browser");
+      } else if (fullscreenMode === "browser") {
+        setFullscreenMode("none");
+        unlockOrientation();
       }
     };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
+  }, [fullscreenMode, unlockOrientation]);
+
+  // iOS native fullscreen events
+  useEffect(() => {
+    const v: any = videoRef.current;
+    if (!v?.addEventListener) return;
+
+    const onBegin = () => setFullscreenMode("native");
+    const onEnd = () => {
+      setFullscreenMode("none");
+      unlockOrientation();
+    };
+
+    v.addEventListener("webkitbeginfullscreen", onBegin);
+    v.addEventListener("webkitendfullscreen", onEnd);
+    return () => {
+      v.removeEventListener("webkitbeginfullscreen", onBegin);
+      v.removeEventListener("webkitendfullscreen", onEnd);
+    };
+  }, [unlockOrientation]);
+
+  // Track device orientation to support CSS rotate fallback
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mql = window.matchMedia("(orientation: portrait)");
+    const update = () => setIsPortrait(mql.matches);
+    update();
+
+    // Safari fallback for older implementations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacy: any = mql;
+    if (mql.addEventListener) mql.addEventListener("change", update);
+    else if (legacy.addListener) legacy.addListener(update);
+
+    window.addEventListener("orientationchange", update);
+    window.addEventListener("resize", update);
+
+    return () => {
+      if (mql.removeEventListener) mql.removeEventListener("change", update);
+      else if (legacy.removeListener) legacy.removeListener(update);
+      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   // ---- Skip intro/outro ----
@@ -448,8 +573,21 @@ export default function VideoPlayer({
     <div
       ref={containerRef}
       className={`relative w-full bg-black overflow-hidden select-none ${
-        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "rounded-xl aspect-video"
+        isFullscreen
+          ? `fixed z-50 rounded-none ${shouldRotateLandscape ? "" : "inset-0"}`
+          : "rounded-xl aspect-video"
       }`}
+      style={
+        shouldRotateLandscape
+          ? {
+              top: "50%",
+              left: "50%",
+              width: "100vh",
+              height: "100vw",
+              transform: "translate(-50%, -50%) rotate(90deg)",
+            }
+          : undefined
+      }
       onMouseMove={showControlsBriefly}
       onClick={handleTap}
       onTouchStart={handleTouchStart}
