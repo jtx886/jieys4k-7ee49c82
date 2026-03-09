@@ -184,7 +184,7 @@ export default function VideoPlayer({
     }
   }, [duration, initialProgress]);
 
-  // ---- Time update ----
+  // ---- Time update & Auto next episode ----
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -197,15 +197,25 @@ export default function VideoPlayer({
     };
     const onPlay = () => setPaused(false);
     const onPause = () => setPaused(true);
+    const onEnded = () => {
+      // Auto play next episode when current ends
+      if (hasNextEpisode && onNextEpisode) {
+        setTimeout(() => {
+          onNextEpisode();
+        }, 1000); // 1 second delay before auto-playing next
+      }
+    };
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
+    video.addEventListener("ended", onEnded);
     return () => {
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
+      video.removeEventListener("ended", onEnded);
     };
-  }, [onProgress]);
+  }, [onProgress, hasNextEpisode, onNextEpisode]);
 
   // ---- Controls auto-hide ----
   const showControlsBriefly = useCallback(() => {
