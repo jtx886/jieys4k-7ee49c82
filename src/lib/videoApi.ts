@@ -1,15 +1,11 @@
 const API_SOURCES = [
   {
-    name: "黑木耳资源",
-    base: "https://json.heimuer.xyz/api.php/provide/vod/",
+    name: "百度资源",
+    base: "https://api.apibdzy.com/api.php/provide/vod/",
   },
   {
-    name: "暴风资源",
-    base: "https://bfzyapi.com/api.php/provide/vod/",
-  },
-  {
-    name: "极速资源",
-    base: "https://jszyapi.com/api.php/provide/vod/",
+    name: "OK资源",
+    base: "https://okzyw9.com/api.php/provide/vod/",
   },
 ];
 
