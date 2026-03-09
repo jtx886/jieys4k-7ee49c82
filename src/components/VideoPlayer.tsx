@@ -73,10 +73,6 @@ export default function VideoPlayer({
   const [ratioIdx, setRatioIdx] = useState(0);
   const [showRatioMenu, setShowRatioMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [orientationLockFailed, setOrientationLockFailed] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(() =>
-    typeof window !== "undefined" ? window.innerHeight > window.innerWidth : false
-  );
   const [showControls, setShowControls] = useState(true);
   const hideControlsTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -250,74 +246,42 @@ export default function VideoPlayer({
   };
 
   // ---- Fullscreen ----
-  const shouldRotateLandscape = isFullscreen && isPortrait && orientationLockFailed;
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const update = () => setIsPortrait(window.innerHeight > window.innerWidth);
-    window.addEventListener("resize", update);
-    window.addEventListener("orientationchange", update);
-    update();
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("orientationchange", update);
-    };
-  }, []);
-
   const toggleFullscreen = async () => {
     const el = containerRef.current;
     if (!el) return;
 
-    const supportsOrientationLock =
-      typeof screen !== "undefined" &&
-      !!screen.orientation &&
-      typeof screen.orientation.lock === "function";
-
-    const supportsOrientationUnlock =
-      typeof screen !== "undefined" &&
-      !!screen.orientation &&
-      typeof screen.orientation.unlock === "function";
-
     if (!isFullscreen) {
-      setOrientationLockFailed(false);
-
-      // Try native fullscreen first; if not supported, fall back to "pseudo" fullscreen (fixed positioning)
-      if (el.requestFullscreen) {
-        try {
-          await el.requestFullscreen();
-        } catch {
-          // Ignore; we'll still enter pseudo fullscreen
-        }
+      // Enter fullscreen
+      try {
+        await el.requestFullscreen?.();
+      } catch (err) {
+        console.log("Fullscreen request failed:", err);
       }
-
       setIsFullscreen(true);
 
-      // Try to force landscape on supported browsers; if it fails, we'll rotate via CSS as a fallback.
-      if (supportsOrientationLock) {
-        try {
+      // Lock to landscape orientation (allows left/right rotation)
+      try {
+        if (screen.orientation?.lock) {
           await screen.orientation.lock("landscape");
-        } catch {
-          setOrientationLockFailed(true);
         }
-      } else {
-        setOrientationLockFailed(true);
+      } catch (err) {
+        // Orientation lock not supported or failed - user can manually rotate
+        console.log("Orientation lock not supported or failed:", err);
       }
     } else {
+      // Exit fullscreen
       try {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          await document.exitFullscreen();
-        }
-      } catch {
-        // Ignore
+        await document.exitFullscreen?.();
+      } catch (err) {
+        console.log("Exit fullscreen failed:", err);
       }
-
       setIsFullscreen(false);
-      setOrientationLockFailed(false);
 
+      // Unlock orientation
       try {
-        if (supportsOrientationUnlock) screen.orientation.unlock();
-      } catch {
-        // Ignore
+        screen.orientation?.unlock();
+      } catch (err) {
+        console.log("Orientation unlock failed:", err);
       }
     }
   };
@@ -326,12 +290,10 @@ export default function VideoPlayer({
     const onFs = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
+      // Unlock orientation when exiting fullscreen via ESC or back gesture
       if (!isFull) {
-        setOrientationLockFailed(false);
         try {
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
+          screen.orientation?.unlock();
         } catch {
           // Ignore
         }
@@ -486,20 +448,8 @@ export default function VideoPlayer({
     <div
       ref={containerRef}
       className={`relative w-full bg-black overflow-hidden select-none ${
-        isFullscreen ? "fixed z-50 rounded-none" : "rounded-xl aspect-video"
-      } ${isFullscreen && !shouldRotateLandscape ? "inset-0" : ""}`}
-      style={
-        shouldRotateLandscape
-          ? {
-              width: "100vh",
-              height: "100vw",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%) rotate(90deg)",
-              transformOrigin: "center",
-            }
-          : undefined
-      }
+        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "rounded-xl aspect-video"
+      }`}
       onMouseMove={showControlsBriefly}
       onClick={handleTap}
       onTouchStart={handleTouchStart}
