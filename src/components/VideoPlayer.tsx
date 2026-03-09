@@ -530,14 +530,19 @@ export default function VideoPlayer({
     showControlsBriefly();
   };
 
-  // ---- Double tap to play/pause, single tap to show controls ----
+  // ---- Double tap to play/pause, single tap to toggle controls ----
   const handleTap = () => {
     tapCount.current += 1;
     if (tapCount.current === 1) {
       tapTimer.current = setTimeout(() => {
-        // Single tap: just show/hide controls
+        // Single tap: toggle controls immediately
         tapCount.current = 0;
-        showControlsBriefly();
+        if (showControls) {
+          if (hideControlsTimer.current) clearTimeout(hideControlsTimer.current);
+          setShowControls(false);
+        } else {
+          showControlsBriefly();
+        }
       }, 300);
     } else if (tapCount.current >= 2) {
       // Double tap: toggle play/pause
