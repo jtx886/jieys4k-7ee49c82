@@ -668,13 +668,24 @@ export default function VideoPlayer({
           className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Rotate button */}
+          {/* Episode list button - top right */}
+          {episodes.length > 0 && (
+            <button 
+              onClick={() => setShowEpisodeList(!showEpisodeList)} 
+              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
+              title="选集"
+            >
+              选集
+            </button>
+          )}
+
+          {/* Rotate button - text style */}
           <button
             onClick={handleRotate}
-            className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+            className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
             title="旋转屏幕"
           >
-            <RotateCw className="w-4 h-4" />
+            旋转屏幕
           </button>
 
           {/* Ratio button */}
