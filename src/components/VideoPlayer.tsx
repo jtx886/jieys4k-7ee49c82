@@ -581,306 +581,353 @@ export default function VideoPlayer({
     setRotation((prev) => (prev + 90) % 360);
   };
 
+  const baseAutoRotateDeg = shouldRotateLandscape ? 90 : 0;
+  const effectiveRotationDeg = (baseAutoRotateDeg + rotation) % 360;
+  const isQuarterTurn = effectiveRotationDeg % 180 !== 0;
+
+  const stageClassName =
+    isFullscreen && fullscreenMode !== "native"
+      ? "absolute"
+      : "relative w-full h-full";
+
+  const stageStyle: React.CSSProperties =
+    isFullscreen && fullscreenMode !== "native"
+      ? {
+          top: "50%",
+          left: "50%",
+          width: isQuarterTurn ? "100vh" : "100vw",
+          height: isQuarterTurn ? "100vw" : "100vh",
+          transform: `translate(-50%, -50%) rotate(${effectiveRotationDeg}deg)`,
+        }
+      : rotation !== 0
+        ? {
+            width: "100%",
+            height: "100%",
+            transform: `rotate(${rotation}deg)`,
+          }
+        : {
+            width: "100%",
+            height: "100%",
+          };
+
   return (
     <div
       ref={containerRef}
       className={`relative w-full bg-black overflow-hidden select-none ${
-        isFullscreen
-          ? `fixed z-50 rounded-none ${shouldRotateLandscape ? "" : "inset-0"}`
-          : "rounded-xl aspect-video"
+        isFullscreen ? "fixed inset-0 z-50 rounded-none" : "rounded-xl aspect-video"
       }`}
-      style={
-        shouldRotateLandscape
-          ? {
-              top: "50%",
-              left: "50%",
-              width: "100vh",
-              height: "100vw",
-              transform: `translate(-50%, -50%) rotate(${90 + rotation}deg)`,
-            }
-          : rotation !== 0
-          ? {
-              transform: `rotate(${rotation}deg)`,
-            }
-          : undefined
-      }
       onMouseMove={showControlsBriefly}
       onClick={handleTap}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Brightness overlay - dims the screen like real brightness */}
-      {brightness < 1 && (
-        <div
-          className="absolute inset-0 bg-black pointer-events-none z-[5]"
-          style={{ opacity: 1 - brightness }}
-        />
-      )}
-      {/* Loading */}
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        </div>
-      )}
-      {/* Error */}
-      {error && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-2">
-          <AlertCircle className="w-10 h-10 text-destructive" />
-          <p className="text-sm text-white/70">{error}</p>
-        </div>
-      )}
-
-      {/* Gesture overlay info */}
-      {gestureInfo && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-black/70 text-white px-4 py-2 rounded-lg text-sm font-medium pointer-events-none">
-          {gestureInfo}
-        </div>
-      )}
-
-      {/* Long press indicator */}
-      {isLongPress && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-medium pointer-events-none animate-pulse">
-          ⏩ 2x 倍速
-        </div>
-      )}
-
-      {/* Video element */}
-      <video
-        ref={videoRef}
-        className="w-full h-full"
-        style={getVideoStyle()}
-        playsInline
-        onClick={(e) => e.stopPropagation()}
-      />
-
-      {/* Custom Controls Overlay */}
-      <div
-        className={`absolute inset-0 z-10 transition-opacity duration-300 ${showControls || paused ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleTap();
-        }}
-      >
-        {/* Top bar */}
-        <div
-          className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Episode list button - top right */}
-          {episodes.length > 0 && (
-            <button 
-              onClick={() => setShowEpisodeList(!showEpisodeList)} 
-              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
-              title="选集"
-            >
-              选集
-            </button>
-          )}
-
-          {/* Rotate button - text style */}
-          <button
-            onClick={handleRotate}
-            className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
-            title="旋转屏幕"
-          >
-            旋转屏幕
-          </button>
-
-          {/* Ratio button */}
-          <div className="relative">
-            <button
-              onClick={() => { setShowRatioMenu(!showRatioMenu); setShowSpeedMenu(false); }}
-              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30"
-            >
-              {RATIO_OPTIONS[ratioIdx].label}
-            </button>
-            {showRatioMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-black/90 backdrop-blur-md rounded-lg overflow-hidden min-w-[80px] z-40">
-                {RATIO_OPTIONS.map((r, i) => (
-                  <button
-                    key={r.value}
-                    onClick={() => { setRatioIdx(i); setShowRatioMenu(false); }}
-                    className={`block w-full text-left px-3 py-2 text-xs transition-colors ${i === ratioIdx ? "text-primary bg-white/10" : "text-white/80 hover:bg-white/10"}`}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Speed button */}
-          <div className="relative">
-            <button
-              onClick={() => { setShowSpeedMenu(!showSpeedMenu); setShowRatioMenu(false); }}
-              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30"
-            >
-              {speed}x
-            </button>
-            {showSpeedMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-black/90 backdrop-blur-md rounded-lg overflow-hidden min-w-[60px] z-40">
-                {SPEED_OPTIONS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => changeSpeed(s)}
-                    className={`block w-full text-left px-3 py-2 text-xs transition-colors ${s === speed ? "text-primary bg-white/10" : "text-white/80 hover:bg-white/10"}`}
-                  >
-                    {s}x
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Fullscreen */}
-          <button
-            onClick={toggleFullscreen}
-            className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
-          >
-            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Center play/pause */}
-        {paused && !loading && !error && (
+      <div className={stageClassName} style={stageStyle}>
+        {/* Brightness overlay - dims the screen like real brightness */}
+        {brightness < 1 && (
           <div
-            className="absolute inset-0 flex items-center justify-center z-20"
-            onClick={(e) => {
-              e.stopPropagation();
-              const video = videoRef.current;
-              if (video) video.play().catch(() => {});
-              showControlsBriefly();
-            }}
-          >
-            <div className="bg-black/50 rounded-full p-4">
-              <Play className="w-10 h-10 text-white fill-white" />
-            </div>
+            className="absolute inset-0 bg-black pointer-events-none z-[5]"
+            style={{ opacity: 1 - brightness }}
+          />
+        )}
+        {/* Loading */}
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          </div>
+        )}
+        {/* Error */}
+        {error && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-2">
+            <AlertCircle className="w-10 h-10 text-destructive" />
+            <p className="text-sm text-white/70">{error}</p>
           </div>
         )}
 
-        {/* Bottom bar */}
-        <div
-          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8 space-y-2"
+        {/* Gesture overlay info */}
+        {gestureInfo && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 bg-black/70 text-white px-4 py-2 rounded-lg text-sm font-medium pointer-events-none">
+            {gestureInfo}
+          </div>
+        )}
+
+        {/* Long press indicator */}
+        {isLongPress && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-medium pointer-events-none animate-pulse">
+            ⏩ 2x 倍速
+          </div>
+        )}
+
+        {/* Video element */}
+        <video
+          ref={videoRef}
+          className="w-full h-full"
+          style={getVideoStyle()}
+          playsInline
           onClick={(e) => e.stopPropagation()}
+        />
+
+        {/* Custom Controls Overlay */}
+        <div
+          className={`absolute inset-0 z-10 transition-opacity duration-300 ${
+            showControls || paused ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTap();
+          }}
         >
-          {/* Progress bar */}
+          {/* Top bar */}
           <div
-            className="w-full h-1.5 bg-white/20 rounded-full cursor-pointer group relative"
-            onClick={handleProgressClick}
+            className="absolute top-0 left-0 right-0 p-3 flex justify-end gap-2 bg-gradient-to-b from-black/60 to-transparent"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="h-full bg-primary rounded-full relative transition-all"
-              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {/* Previous episode */}
-              {hasPrevEpisode && (
-                <button 
-                  onClick={onPrevEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
-                  title="上一集"
-                >
-                  上一集
-                </button>
-              )}
-              <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
-              </button>
-              <span className="text-white/80 text-xs tabular-nums">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-              {currentEpisodeName && (
-                <span className="text-white/60 text-xs hidden sm:inline">
-                  {currentEpisodeName}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={skipOutro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
-                跳过片尾{skipOutroSec > 0 ? ` ${skipOutroSec}s` : ""}
-              </button>
+            {/* Episode list button - top right */}
+            {episodes.length > 0 && (
               <button
-                onClick={() => setShowSkipSettings(!showSkipSettings)}
-                className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+                onClick={() => setShowEpisodeList(!showEpisodeList)}
+                className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
+                title="选集"
               >
-                ⚙️
+                选集
               </button>
-              {/* Next episode */}
-              {hasNextEpisode && (
-                <button 
-                  onClick={onNextEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
-                  title="下一集"
-                >
-                  下一集
-                </button>
+            )}
+
+            {/* Rotate button - text style */}
+            <button
+              onClick={handleRotate}
+              className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 font-medium"
+              title="旋转屏幕"
+            >
+              旋转屏幕
+            </button>
+
+            {/* Ratio button */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowRatioMenu(!showRatioMenu);
+                  setShowSpeedMenu(false);
+                }}
+                className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30"
+              >
+                {RATIO_OPTIONS[ratioIdx].label}
+              </button>
+              {showRatioMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-black/90 backdrop-blur-md rounded-lg overflow-hidden min-w-[80px] z-40">
+                  {RATIO_OPTIONS.map((r, i) => (
+                    <button
+                      key={r.value}
+                      onClick={() => {
+                        setRatioIdx(i);
+                        setShowRatioMenu(false);
+                      }}
+                      className={`block w-full text-left px-3 py-2 text-xs transition-colors ${
+                        i === ratioIdx
+                          ? "text-primary bg-white/10"
+                          : "text-white/80 hover:bg-white/10"
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
+
+            {/* Speed button */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowSpeedMenu(!showSpeedMenu);
+                  setShowRatioMenu(false);
+                }}
+                className="text-white/90 text-xs bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30"
+              >
+                {speed}x
+              </button>
+              {showSpeedMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-black/90 backdrop-blur-md rounded-lg overflow-hidden min-w-[60px] z-40">
+                  {SPEED_OPTIONS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => changeSpeed(s)}
+                      className={`block w-full text-left px-3 py-2 text-xs transition-colors ${
+                        s === speed
+                          ? "text-primary bg-white/10"
+                          : "text-white/80 hover:bg-white/10"
+                      }`}
+                    >
+                      {s}x
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+            >
+              {isFullscreen ? (
+                <Minimize className="w-4 h-4" />
+              ) : (
+                <Maximize className="w-4 h-4" />
+              )}
+            </button>
           </div>
 
-          {/* Skip settings panel */}
-          {showSkipSettings && (
-            <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-white/90">
-              <label className="flex items-center gap-1.5">
-                片头
-                <input
-                  type="number"
-                  min={0}
-                  max={600}
-                  value={skipIntroSec}
-                  onChange={(e) => setSkipIntroSec(Math.max(0, Number(e.target.value)))}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
-                />
-                秒
-              </label>
-              <label className="flex items-center gap-1.5">
-                片尾
-                <input
-                  type="number"
-                  min={0}
-                  max={600}
-                  value={skipOutroSec}
-                  onChange={(e) => setSkipOutroSec(Math.max(0, Number(e.target.value)))}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
-                />
-                秒
-              </label>
-            </div>
-          )}
-
-          {/* Episode list panel */}
-          {showEpisodeList && episodes.length > 0 && (
-            <div className="bg-black/90 backdrop-blur-md rounded-lg p-3 max-h-[200px] overflow-y-auto">
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                {episodes.map((ep, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      if (onEpisodeSelect) {
-                        onEpisodeSelect(index);
-                        setShowEpisodeList(false);
-                      }
-                    }}
-                    className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
-                      index === currentEpisodeIndex
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-white/10 text-white/80 hover:bg-white/20"
-                    }`}
-                  >
-                    {ep.name}
-                  </button>
-                ))}
+          {/* Center play/pause */}
+          {paused && !loading && !error && (
+            <div
+              className="absolute inset-0 flex items-center justify-center z-20"
+              onClick={(e) => {
+                e.stopPropagation();
+                const video = videoRef.current;
+                if (video) video.play().catch(() => {});
+                showControlsBriefly();
+              }}
+            >
+              <div className="bg-black/50 rounded-full p-4">
+                <Play className="w-10 h-10 text-white fill-white" />
               </div>
             </div>
           )}
+
+          {/* Bottom bar */}
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8 space-y-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Progress bar */}
+            <div
+              className="w-full h-1.5 bg-white/20 rounded-full cursor-pointer group relative"
+              onClick={handleProgressClick}
+            >
+              <div
+                className="h-full bg-primary rounded-full relative transition-all"
+                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* Previous episode */}
+                {hasPrevEpisode && (
+                  <button
+                    onClick={onPrevEpisode}
+                    className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
+                    title="上一集"
+                  >
+                    上一集
+                  </button>
+                )}
+                <button
+                  onClick={skipIntro}
+                  className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+                >
+                  跳过片头{skipIntroSec > 0 ? ` ${skipIntroSec}s` : ""}
+                </button>
+                <span className="text-white/80 text-xs tabular-nums">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+                {currentEpisodeName && (
+                  <span className="text-white/60 text-xs hidden sm:inline">
+                    {currentEpisodeName}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={skipOutro}
+                  className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+                >
+                  跳过片尾{skipOutroSec > 0 ? ` ${skipOutroSec}s` : ""}
+                </button>
+                <button
+                  onClick={() => setShowSkipSettings(!showSkipSettings)}
+                  className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25"
+                >
+                  ⚙️
+                </button>
+                {/* Next episode */}
+                {hasNextEpisode && (
+                  <button
+                    onClick={onNextEpisode}
+                    className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
+                    title="下一集"
+                  >
+                    下一集
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Skip settings panel */}
+            {showSkipSettings && (
+              <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-white/90">
+                <label className="flex items-center gap-1.5">
+                  片头
+                  <input
+                    type="number"
+                    min={0}
+                    max={600}
+                    value={skipIntroSec}
+                    onChange={(e) =>
+                      setSkipIntroSec(Math.max(0, Number(e.target.value)))
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  秒
+                </label>
+                <label className="flex items-center gap-1.5">
+                  片尾
+                  <input
+                    type="number"
+                    min={0}
+                    max={600}
+                    value={skipOutroSec}
+                    onChange={(e) =>
+                      setSkipOutroSec(Math.max(0, Number(e.target.value)))
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-14 bg-white/15 text-white text-center rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  秒
+                </label>
+              </div>
+            )}
+
+            {/* Episode list panel */}
+            {showEpisodeList && episodes.length > 0 && (
+              <div className="bg-black/90 backdrop-blur-md rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  {episodes.map((ep, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (onEpisodeSelect) {
+                          onEpisodeSelect(index);
+                          setShowEpisodeList(false);
+                        }
+                      }}
+                      className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
+                        index === currentEpisodeIndex
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-white/10 text-white/80 hover:bg-white/20"
+                      }`}
+                    >
+                      {ep.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
