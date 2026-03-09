@@ -304,61 +304,128 @@ export default function VideoPlayer({
   };
 
   // ---- Fullscreen ----
-  const toggleFullscreen = async () => {
+  const lockLandscape = useCallback(async () => {
+    try {
+      await screen.orientation?.lock?.("landscape");
+    } catch {
+      // Some browsers (notably iOS Safari) don't support orientation lock.
+    }
+  }, []);
+
+  const unlockOrientation = useCallback(() => {
+    try {
+      screen.orientation?.unlock?.();
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
     const el = containerRef.current;
+    const video = videoRef.current as any;
     if (!el) return;
 
     if (!isFullscreen) {
-      // Enter fullscreen
-      try {
-        await el.requestFullscreen?.();
-      } catch (err) {
-        console.log("Fullscreen request failed:", err);
-      }
-      setIsFullscreen(true);
-
-      // Lock to landscape orientation (allows left/right rotation)
-      try {
-        if (screen.orientation?.lock) {
-          await screen.orientation.lock("landscape");
+      // Prefer real fullscreen when available
+      if (el.requestFullscreen) {
+        try {
+          await el.requestFullscreen();
+          setFullscreenMode("browser");
+          // Give the browser a tick to enter fullscreen before locking
+          setTimeout(() => {
+            lockLandscape();
+          }, 80);
+          return;
+        } catch {
+          // Fall through to pseudo
         }
-      } catch (err) {
-        // Orientation lock not supported or failed - user can manually rotate
-        console.log("Orientation lock not supported or failed:", err);
       }
+
+      // iOS Safari: prefer native fullscreen (auto-rotates)
+      if (video?.webkitEnterFullscreen) {
+        try {
+          video.webkitEnterFullscreen();
+          setFullscreenMode("native");
+          return;
+        } catch {
+          // Fall through
+        }
+      }
+
+      // Fallback: pseudo fullscreen (CSS)
+      setFullscreenMode("pseudo");
+      lockLandscape();
     } else {
       // Exit fullscreen
-      try {
-        await document.exitFullscreen?.();
-      } catch (err) {
-        console.log("Exit fullscreen failed:", err);
+      if (fullscreenMode === "browser") {
+        try {
+          await document.exitFullscreen?.();
+        } catch {
+          // ignore
+        }
       }
-      setIsFullscreen(false);
-
-      // Unlock orientation
-      try {
-        screen.orientation?.unlock();
-      } catch (err) {
-        console.log("Orientation unlock failed:", err);
-      }
+      setFullscreenMode("none");
+      unlockOrientation();
     }
-  };
+  }, [fullscreenMode, isFullscreen, lockLandscape, unlockOrientation]);
 
+  // Keep state in sync with browser fullscreen UI (ESC/back)
   useEffect(() => {
     const onFs = () => {
       const isFull = !!document.fullscreenElement;
-      setIsFullscreen(isFull);
-      // Unlock orientation when exiting fullscreen via ESC or back gesture
-      if (!isFull) {
-        try {
-          screen.orientation?.unlock();
-        } catch {
-          // Ignore
-        }
+      if (isFull) {
+        setFullscreenMode("browser");
+      } else if (fullscreenMode === "browser") {
+        setFullscreenMode("none");
+        unlockOrientation();
       }
     };
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
+  }, [fullscreenMode, unlockOrientation]);
+
+  // iOS native fullscreen events
+  useEffect(() => {
+    const v: any = videoRef.current;
+    if (!v?.addEventListener) return;
+
+    const onBegin = () => setFullscreenMode("native");
+    const onEnd = () => {
+      setFullscreenMode("none");
+      unlockOrientation();
+    };
+
+    v.addEventListener("webkitbeginfullscreen", onBegin);
+    v.addEventListener("webkitendfullscreen", onEnd);
+    return () => {
+      v.removeEventListener("webkitbeginfullscreen", onBegin);
+      v.removeEventListener("webkitendfullscreen", onEnd);
+    };
+  }, [unlockOrientation]);
+
+  // Track device orientation to support CSS rotate fallback
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mql = window.matchMedia("(orientation: portrait)");
+    const update = () => setIsPortrait(mql.matches);
+    update();
+
+    // Safari fallback for older implementations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacy: any = mql;
+    if (mql.addEventListener) mql.addEventListener("change", update);
+    else if (legacy.addListener) legacy.addListener(update);
+
+    window.addEventListener("orientationchange", update);
+    window.addEventListener("resize", update);
+
+    return () => {
+      if (mql.removeEventListener) mql.removeEventListener("change", update);
+      else if (legacy.removeListener) legacy.removeListener(update);
+      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   // ---- Skip intro/outro ----
