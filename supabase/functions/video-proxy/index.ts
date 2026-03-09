@@ -5,18 +5,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const API_SOURCES = [
-  "https://api.apibdzy.com/api.php/provide/vod/",
-  "https://okzyw9.com/api.php/provide/vod/",
-];
+// 光速资源站 - 稳定无广告高清资源
+const API_BASE = "https://api.guangsuapi.com/api.php/provide/vod/";
 
-// Parent category -> sub-category mappings
+// Parent category -> sub-category mappings for guangsu
 const CATEGORY_MAP: Record<string, string[]> = {
-  "1": ["6", "7", "8", "9", "10", "11", "12"],      // 电影
-  "2": ["13", "14", "15", "16", "17", "18", "19", "23"], // 电视剧
-  "3": ["25", "26", "27", "28"],                      // 综艺
-  "4": ["29", "30", "31", "44", "45"],                // 动漫
-  "39": ["39"],                                        // 动画电影(动画片)
+  "1": ["6", "7", "8", "9", "10", "11", "12", "20"],  // 电影 (动作/喜剧/爱情/科幻/剧情/恐怖/战争/动漫电影)
+  "2": ["13", "14", "15", "16", "21", "22", "23"],     // 电视剧 (大陆/欧美/港澳/韩/日/台湾/泰)
+  "3": ["3"],                                            // 综艺
+  "4": ["4"],                                            // 动漫
+  "20": ["20"],                                          // 动漫电影
 };
 
 serve(async (req) => {
@@ -31,12 +29,9 @@ serve(async (req) => {
     const pg = url.searchParams.get("pg") || "1";
     const ids = url.searchParams.get("ids") || "";
     const t = url.searchParams.get("t") || "";
-    const sourceIndex = parseInt(url.searchParams.get("source") || "0");
-
-    const baseUrl = API_SOURCES[sourceIndex] || API_SOURCES[0];
 
     if (action === "detail" && ids) {
-      const apiUrl = `${baseUrl}?ac=detail&ids=${ids}`;
+      const apiUrl = `${API_BASE}?ac=detail&ids=${ids}`;
       console.log(`Fetching detail: ${apiUrl}`);
       const response = await fetch(apiUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
@@ -48,7 +43,7 @@ serve(async (req) => {
     }
 
     if (action === "search" && wd) {
-      const apiUrl = `${baseUrl}?ac=detail&pg=${pg}&wd=${encodeURIComponent(wd)}`;
+      const apiUrl = `${API_BASE}?ac=detail&pg=${pg}&wd=${encodeURIComponent(wd)}`;
       console.log(`Fetching search: ${apiUrl}`);
       const response = await fetch(apiUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
@@ -64,7 +59,7 @@ serve(async (req) => {
     
     if (subCategories.length === 0) {
       // No category filter - fetch all
-      const apiUrl = `${baseUrl}?ac=list&pg=${pg}`;
+      const apiUrl = `${API_BASE}?ac=list&pg=${pg}`;
       console.log(`Fetching list: ${apiUrl}`);
       const response = await fetch(apiUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
@@ -73,7 +68,7 @@ serve(async (req) => {
       
       if (listData.list && listData.list.length > 0) {
         const vodIds = listData.list.map((item: any) => item.vod_id).join(",");
-        const detailUrl = `${baseUrl}?ac=detail&ids=${vodIds}`;
+        const detailUrl = `${API_BASE}?ac=detail&ids=${vodIds}`;
         const detailRes = await fetch(detailUrl, {
           headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
         });
@@ -88,7 +83,7 @@ serve(async (req) => {
 
     // Fetch first sub-category for pagination info, then get details
     const firstSub = subCategories[0];
-    const apiUrl = `${baseUrl}?ac=list&pg=${pg}&t=${firstSub}`;
+    const apiUrl = `${API_BASE}?ac=list&pg=${pg}&t=${firstSub}`;
     console.log(`Fetching category ${t} (sub: ${firstSub}): ${apiUrl}`);
     const response = await fetch(apiUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
@@ -98,7 +93,7 @@ serve(async (req) => {
     // If multiple sub-categories, fetch more to fill content
     if (subCategories.length > 1 && listData.list) {
       const otherFetches = subCategories.slice(1, 3).map(async (sub) => {
-        const subUrl = `${baseUrl}?ac=list&pg=${pg}&t=${sub}`;
+        const subUrl = `${API_BASE}?ac=list&pg=${pg}&t=${sub}`;
         const res = await fetch(subUrl, {
           headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
         });
@@ -118,7 +113,7 @@ serve(async (req) => {
     // Fetch full details for the list items
     if (listData.list && listData.list.length > 0) {
       const vodIds = listData.list.map((item: any) => item.vod_id).join(",");
-      const detailUrl = `${baseUrl}?ac=detail&ids=${vodIds}`;
+      const detailUrl = `${API_BASE}?ac=detail&ids=${vodIds}`;
       console.log(`Fetching details: ${detailUrl}`);
       const detailRes = await fetch(detailUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
