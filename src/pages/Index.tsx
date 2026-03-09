@@ -6,7 +6,7 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 
 export default function Index() {
   const [category, setCategory] = useState(0);
@@ -50,18 +50,36 @@ export default function Index() {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-6 space-y-6">
-        {/* Hero */}
+        {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass rounded-2xl p-6 sm:p-8"
+          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          className="glass-strong rounded-3xl p-8 sm:p-10 relative overflow-hidden"
         >
-          <h1 className="text-2xl sm:text-3xl font-display font-bold">
-            <span className="gradient-text">JIE影视4K</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            免费在线观看高清电影、电视剧、动漫 · 视频资源中的广告请勿相信 · 支持4K
-          </p>
+          {/* Decorative gradient orbs */}
+          <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-primary/20 to-accent/10 rounded-full blur-3xl opacity-50" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-accent/15 to-transparent rounded-full blur-2xl opacity-40" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider">Premium 4K Streaming</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold leading-tight">
+              <span className="gradient-text">JIE影视4K</span>
+            </h1>
+            <p className="text-muted-foreground mt-3 text-sm sm:text-base max-w-2xl leading-relaxed">
+              🎬 高清无广告4K画质影视平台 · 海量蓝光资源免费观看
+            </p>
+            <div className="flex flex-wrap gap-3 mt-5">
+              {["⚡ 极速加载", "🎯 精准搜索", "📱 全平台支持"].map((tag) => (
+                <div key={tag} className="glass px-4 py-2 rounded-full text-xs sm:text-sm text-foreground/90 border border-white/8">
+                  {tag}
+                </div>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
         {/* Categories */}
@@ -75,15 +93,15 @@ export default function Index() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4"
+              transition={{ duration: 0.4 }}
+              className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 sm:gap-5"
             >
               {videos.map((video, i) => (
                 <motion.div
                   key={`${video.vod_id}-${i}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(i * 0.03, 0.5) }}
+                  transition={{ delay: Math.min(i * 0.03, 0.5), duration: 0.4 }}
                 >
                   <VideoCard video={video} />
                 </motion.div>
@@ -97,14 +115,15 @@ export default function Index() {
             )}
 
             {page < totalPages && (
-              <div className="flex justify-center pt-4">
-                <button
+              <div className="flex justify-center pt-6">
+                <motion.button
                   onClick={loadMore}
-                  className="glass px-6 py-3 rounded-full text-sm font-medium text-foreground hover:bg-secondary transition-all flex items-center gap-2"
+                  whileTap={{ scale: 0.97 }}
+                  className="glass px-8 py-3.5 rounded-2xl text-sm font-semibold text-foreground hover:border-primary/30 transition-all duration-300 flex items-center gap-2 group"
                 >
                   加载更多
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
               </div>
             )}
           </>

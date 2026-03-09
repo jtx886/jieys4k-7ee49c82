@@ -91,12 +91,12 @@ export default function Header() {
   ];
 
   return (
-    <header className="glass-strong sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center gap-3">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg gradient-btn flex items-center justify-center">
-            <Film className="w-4 h-4 text-primary-foreground" />
+    <header className="glass-strong sticky top-0 z-50 border-b border-white/5 shadow-xl">
+      <div className="container mx-auto px-4 py-3.5 flex items-center gap-3">
+        {/* Premium Logo */}
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="w-9 h-9 rounded-xl gradient-btn flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+            <Film className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display font-bold text-lg gradient-text hidden sm:block">
             JIE影视4K
@@ -115,7 +115,7 @@ export default function Header() {
               onFocus={() => {
                 if (suggestions.length > 0) setShowSuggestions(true);
               }}
-              className="w-full pl-10 pr-12 py-2 rounded-full bg-secondary border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+              className="w-full pl-10 pr-12 py-2.5 rounded-full glass border border-white/10 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/40 transition-all duration-300 hover:border-white/20"
             />
 
             {/* Search history button */}
@@ -134,9 +134,9 @@ export default function Header() {
               <History className="w-4 h-4" />
             </button>
 
-            {/* Suggestions dropdown */}
+            {/* Premium suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute left-0 right-0 top-full mt-2 glass-strong border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-3xl">
                 {suggestions.map((item) => (
                   <button
                     key={item.vod_id}
@@ -156,9 +156,9 @@ export default function Header() {
               </div>
             )}
 
-            {/* History dropdown */}
+            {/* Premium history dropdown */}
             {showHistory && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute left-0 right-0 top-full mt-2 glass-strong border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-3xl">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border">
                   <p className="text-xs text-muted-foreground">搜索历史</p>
                   <button
