@@ -485,7 +485,21 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full bg-black rounded-xl overflow-hidden select-none ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : "aspect-video"}`}
+      className={`relative w-full bg-black overflow-hidden select-none ${
+        isFullscreen ? "fixed z-50 rounded-none" : "rounded-xl aspect-video"
+      } ${isFullscreen && !shouldRotateLandscape ? "inset-0" : ""}`}
+      style={
+        shouldRotateLandscape
+          ? {
+              width: "100vh",
+              height: "100vw",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%) rotate(90deg)",
+              transformOrigin: "center",
+            }
+          : undefined
+      }
       onMouseMove={showControlsBriefly}
       onClick={handleTap}
       onTouchStart={handleTouchStart}
