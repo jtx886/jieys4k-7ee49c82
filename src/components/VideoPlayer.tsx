@@ -682,6 +682,32 @@ export default function VideoPlayer({
               </label>
             </div>
           )}
+
+          {/* Episode list panel */}
+          {showEpisodeList && episodes.length > 0 && (
+            <div className="bg-black/90 backdrop-blur-md rounded-lg p-3 max-h-[200px] overflow-y-auto">
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {episodes.map((ep, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (onEpisodeSelect) {
+                        onEpisodeSelect(index);
+                        setShowEpisodeList(false);
+                      }
+                    }}
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
+                      index === currentEpisodeIndex
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-white/10 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    {ep.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
