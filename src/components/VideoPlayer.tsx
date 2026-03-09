@@ -573,6 +573,10 @@ export default function VideoPlayer({
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
+  const handleRotate = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -588,7 +592,11 @@ export default function VideoPlayer({
               left: "50%",
               width: "100vh",
               height: "100vw",
-              transform: "translate(-50%, -50%) rotate(90deg)",
+              transform: `translate(-50%, -50%) rotate(${90 + rotation}deg)`,
+            }
+          : rotation !== 0
+          ? {
+              transform: `rotate(${rotation}deg)`,
             }
           : undefined
       }
