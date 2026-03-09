@@ -812,16 +812,6 @@ export default function VideoPlayer({
               >
                 ⚙️
               </button>
-              {/* Episode list button */}
-              {episodes.length > 0 && (
-                <button 
-                  onClick={() => setShowEpisodeList(!showEpisodeList)} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
-                  title="选集"
-                >
-                  选集
-                </button>
-              )}
               {/* Next episode */}
               {hasNextEpisode && (
                 <button 
