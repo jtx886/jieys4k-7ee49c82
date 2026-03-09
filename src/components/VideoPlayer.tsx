@@ -16,6 +16,11 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
+export interface Episode {
+  name: string;
+  url: string;
+}
+
 interface VideoPlayerProps {
   url: string;
   onProgress?: (progress: number) => void;
@@ -26,6 +31,9 @@ interface VideoPlayerProps {
   hasNextEpisode?: boolean;
   hasPrevEpisode?: boolean;
   currentEpisodeName?: string;
+  episodes?: Episode[];
+  currentEpisodeIndex?: number;
+  onEpisodeSelect?: (index: number) => void;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
@@ -48,6 +56,9 @@ export default function VideoPlayer({
   hasNextEpisode = false,
   hasPrevEpisode = false,
   currentEpisodeName,
+  episodes = [],
+  currentEpisodeIndex = 0,
+  onEpisodeSelect,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -88,6 +99,9 @@ export default function VideoPlayer({
   const [skipIntroSec, setSkipIntroSec] = useState(DEFAULT_SKIP_INTRO_SEC);
   const [skipOutroSec, setSkipOutroSec] = useState(DEFAULT_SKIP_OUTRO_SEC);
   const [showSkipSettings, setShowSkipSettings] = useState(false);
+
+  // Episode list state
+  const [showEpisodeList, setShowEpisodeList] = useState(false);
 
   // Progress bar state
   const [currentTime, setCurrentTime] = useState(0);
@@ -170,7 +184,7 @@ export default function VideoPlayer({
     }
   }, [duration, initialProgress]);
 
-  // ---- Time update ----
+  // ---- Time update & Auto next episode ----
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -183,15 +197,25 @@ export default function VideoPlayer({
     };
     const onPlay = () => setPaused(false);
     const onPause = () => setPaused(true);
+    const onEnded = () => {
+      // Auto play next episode when current ends
+      if (hasNextEpisode && onNextEpisode) {
+        setTimeout(() => {
+          onNextEpisode();
+        }, 1000); // 1 second delay before auto-playing next
+      }
+    };
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
+    video.addEventListener("ended", onEnded);
     return () => {
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
+      video.removeEventListener("ended", onEnded);
     };
-  }, [onProgress]);
+  }, [onProgress, hasNextEpisode, onNextEpisode]);
 
   // ---- Controls auto-hide ----
   const showControlsBriefly = useCallback(() => {
@@ -576,10 +600,10 @@ export default function VideoPlayer({
               {hasPrevEpisode && (
                 <button 
                   onClick={onPrevEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
                   title="上一集"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  上一集
                 </button>
               )}
               <button onClick={skipIntro} className="text-white/80 text-[10px] bg-white/15 px-2 py-1 rounded hover:bg-white/25">
@@ -604,14 +628,24 @@ export default function VideoPlayer({
               >
                 ⚙️
               </button>
+              {/* Episode list button */}
+              {episodes.length > 0 && (
+                <button 
+                  onClick={() => setShowEpisodeList(!showEpisodeList)} 
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
+                  title="选集"
+                >
+                  选集
+                </button>
+              )}
               {/* Next episode */}
               {hasNextEpisode && (
                 <button 
                   onClick={onNextEpisode} 
-                  className="text-white/90 bg-white/20 backdrop-blur-sm p-1.5 rounded-lg hover:bg-white/30"
+                  className="text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1.5 rounded-lg hover:bg-white/30 text-xs font-medium"
                   title="下一集"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  下一集
                 </button>
               )}
             </div>
