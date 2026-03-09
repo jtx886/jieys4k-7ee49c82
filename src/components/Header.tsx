@@ -134,9 +134,9 @@ export default function Header() {
               <History className="w-4 h-4" />
             </button>
 
-            {/* Suggestions dropdown */}
+            {/* Premium suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="absolute left-0 right-0 top-full mt-2 glass-strong border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-3xl">
                 {suggestions.map((item) => (
                   <button
                     key={item.vod_id}
