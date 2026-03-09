@@ -1,15 +1,11 @@
 const API_SOURCES = [
   {
-    name: "红牛资源",
-    base: "https://www.hongniuzy2.com/api.php/provide/vod/",
+    name: "百度资源",
+    base: "https://api.apibdzy.com/api.php/provide/vod/",
   },
   {
-    name: "光速资源",
-    base: "https://api.guangsuapi.com/api.php/provide/vod/",
-  },
-  {
-    name: "索尼资源",
-    base: "https://suoniapi.com/api.php/provide/vod/",
+    name: "OK资源",
+    base: "https://okzyw9.com/api.php/provide/vod/",
   },
 ];
 
